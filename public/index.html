@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRSpace</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        #login {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #login h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #login-form {
+            margin-top: 20px;
+        }
+
+        #login-form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        #login-form input[type="text"],
+        #login-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-bottom: 10px;
+        }
+
+        #login-form button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        #login-form button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="login">
+        <h1>VRSpace</h1>
+        <form id="login-form" action="/login" method="post">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password</label>
+        </form>
+        <form id="2fa-form" action="/2fa" method="post" display="none">
+            <label for="totp">2FA Code</label>
+            <input type="text" id="totp" name="totp" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
