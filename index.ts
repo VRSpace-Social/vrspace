@@ -107,7 +107,8 @@ new Elysia()
     .use(staticPlugin())
     .use(html())
     .get('/', () => {
-        
+
+    })
     .listen(PORT);
 
 console.log("[*] Listening on http://localhost:" + PORT);
