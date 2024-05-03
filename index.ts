@@ -24,7 +24,7 @@ const configuration = new vrchat.Configuration({
     }
 });
 
-// const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
+const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
 
 async function getCurrentUser(): Promise<any> {
     try {
