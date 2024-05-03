@@ -4,16 +4,20 @@ import { env } from "bun";
 import axios from "axios";
 import * as fs from "fs";
 import { Cookie, CookieJar } from 'tough-cookie';
-import { wrapper } from "axios-cookiejar-support";
+import { wrapper } from "axios-cookiejar-support"; // DO NOT REMOVE THIS LINE
 
-
+// Cookie Jar Stuff
 let cookies: string; 
-let isCookieFileReady:boolean = false;
+let isCookieFileReady: boolean = false;
 
-const debugType = 'error';
+// Logger Stuff
+const debugType: string = 'error';
 const logger = new LogManager(debugType);
 
 
+// If the cookies file exists, load it
+// Otherwise, throw an error
+// In any case, set the axios defaults since we need that to attach to VRC axios instance to use the cookies
 try
 {
     cookies = fs.readFileSync("./cookies.json", "utf-8");
@@ -32,10 +36,13 @@ finally
     axios.defaults.withCredentials = true;
 }
 
-const API_KEY = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
-const USER_AGENT = "VRSpaceServer/0.0.1 - dev@vrspace.social";
+// Default VRChat API Key, been known for a while
+const API_KEY: string = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
+// User Agent for the VRChat API, otherwise Cloudflare will block you
+const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
 
-const configuration = new vrchat.Configuration({
+// Configuration used for the wrapper
+const configuration: vrchat.Configuration = new vrchat.Configuration({
     username: env.VRC_USERNAME,
     password: env.VRC_PASSWORD,
     apiKey: API_KEY,
@@ -46,9 +53,26 @@ const configuration = new vrchat.Configuration({
     }
 });
 
+// API Methods 
 const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
+const FriendsApi = new vrchat.FriendsApi(configuration); 
 const UsersApi = new vrchat.UsersApi(configuration);
 
+// Login function, this will get technical, so bear with me
+/*
+When you login, you will get a response from the API, which will ask for the 2FA (TOTP/OTP)),
+and he API also sets up a "AuthCookie" in form of a [Set-Cookie] header, which is used for
+continuing the login session; Its also the only Token you need for access the WebSocket.
+After you receive the AuthCookie, you must a second request to the API with your 2FA code,
+and if the code is correct, you will get a response with the TwoFactorAuth.
+
+!!! IMPORTANT !!!
+This cookie is very powerful as it can be used to login to the VRChat API, so keep it safe.
+
+This token is also set up by the [Set-Cookie] header, so you need to save it in a cookie jar.
+For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
+(See the function 'setAuthCookie')
+*/
 async function doLogin(): Promise<any> {
     try {
         const resp = await AuthenticationApi.getCurrentUser();
@@ -84,6 +108,7 @@ async function doLogin(): Promise<any> {
     }
 }
 
+// This function is needed when retrieving the AuthCookie from the API
 async function authenticateUser(): Promise<any> {
     const currentUserData = await doLogin();
     if (!currentUserData) {
@@ -96,6 +121,7 @@ async function authenticateUser(): Promise<any> {
             return null;
         }
         console.log("[✔︎] Authentication token: ", auth.data.token);
+        // Saving all cookies loaded from the local Axios cookiejar into a JSON file for later use.
         setAuthCookie(auth.data.token);
         return auth.data;
     } catch (e) {
@@ -121,9 +147,23 @@ async function authenticateUser(): Promise<any> {
 }
 
 
+async function seeOnlineFriends() {
+    try {
+        const resp = await FriendsApi.getFriends();
+        return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 function setAuthCookie(authCookie: string) {
-    console.log("AUTH COOKIE IS: "+authCookie)
-    const jar: any = (axios.defaults).jar;
+    const jar: CookieJar | undefined = (axios.defaults)?.jar;
+    if(!jar) {
+        console.log("Cookie jar is undefined")
+        return;
+    }
+    // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
     jar.setCookie(
         new Cookie({ key: 'auth', value: authCookie }),
         'https://api.vrchat.cloud'
@@ -136,10 +176,26 @@ function setAuthCookie(authCookie: string) {
 }
 
 
+async function getUserInfo(userId: string) {
+    try {
+        const resp = await UsersApi.getUser(userId)
+        return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 console.log("[*] Initializing, login data:");
 console.log(env.VRC_USERNAME);
 console.log(env.VRC_PASSWORD);
 
+/*
 const currentUserData = await authenticateUser();
-logger.info(currentUserData);
+const friendData = await seeOnlineFriends();
+console.log(friendData);
+*/
+const userData = await getUserInfo("usr_37a5ed4f-ea32-4d7a-9051-cb4883f5e8b0"); //IFritDemonGoat
+console.log(userData)
+
+
 
