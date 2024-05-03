@@ -1,21 +1,43 @@
 import * as vrchat from "vrchat";
-import { Elysia } from 'elysia';
-import { cookie } from '@elysiajs/cookie';
-import { staticPlugin } from '@elysiajs/static';
-import { html } from "@elysiajs/html";
-
+import { LogManager } from './logger';
 import { env } from "bun";
+import axios from "axios";
+import * as fs from "fs";
+import { Cookie, CookieJar } from 'tough-cookie';
+import { wrapper } from "axios-cookiejar-support";
 
-import fs from "fs";
-import path from "path";
 
-const PORT = 3000;
+let cookies: string; 
+let isCookieFileReady:boolean = false;
+
+const debugType = 'error';
+const logger = new LogManager(debugType);
+
+
+try
+{
+    cookies = fs.readFileSync("./cookies.json", "utf-8");
+    if (cookies !== "") {
+        axios.defaults.jar = CookieJar.fromJSON(JSON.parse(cookies));
+        isCookieFileReady = true;
+    }
+}
+catch (e)
+{
+    console.log("Error: "+e)
+    console.warn("Cookie file not found, you need to login first")
+}
+finally
+{
+    axios.defaults.withCredentials = true;
+}
+
 const API_KEY = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
 const USER_AGENT = "VRSpaceServer/0.0.1 - dev@vrspace.social";
 
 const configuration = new vrchat.Configuration({
-    username: env.USERNAME,
-    password: env.PASSWORD,
+    username: env.VRC_USERNAME,
+    password: env.VRC_PASSWORD,
     apiKey: API_KEY,
     baseOptions: {
         headers: {
@@ -25,18 +47,19 @@ const configuration = new vrchat.Configuration({
 });
 
 const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
+const UsersApi = new vrchat.UsersApi(configuration);
 
-async function getCurrentUser(): Promise<any> {
+async function doLogin(): Promise<any> {
     try {
         const resp = await AuthenticationApi.getCurrentUser();
         const currentUser = resp.data;
         if (!currentUser.displayName) {
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
-            console.log(`[DEBUG] Two factor code: ${twoFactorCode}`);
+            logger.debug(`Two factor code: ${twoFactorCode}`);
 
             const verifyResp = await AuthenticationApi.verify2FA({ code: twoFactorCode });
             if (verifyResp.data.verified) {
-                console.log("[✔︎] Verified Successfully, welcome to VRSpace!");
+                logger.success("Verified Successfully, welcome to VRSpace!");
             }
         }
         return resp.data;
@@ -62,7 +85,7 @@ async function getCurrentUser(): Promise<any> {
 }
 
 async function authenticateUser(): Promise<any> {
-    const currentUserData = await getCurrentUser();
+    const currentUserData = await doLogin();
     if (!currentUserData) {
         return null;
     }
@@ -73,6 +96,7 @@ async function authenticateUser(): Promise<any> {
             return null;
         }
         console.log("[✔︎] Authentication token: ", auth.data.token);
+        setAuthCookie(auth.data.token);
         return auth.data;
     } catch (e) {
         const errorResponse = e as any;
@@ -96,19 +120,26 @@ async function authenticateUser(): Promise<any> {
     }
 }
 
+
+function setAuthCookie(authCookie: string) {
+    console.log("AUTH COOKIE IS: "+authCookie)
+    const jar: any = (axios.defaults).jar;
+    jar.setCookie(
+        new Cookie({ key: 'auth', value: authCookie }),
+        'https://api.vrchat.cloud'
+    )
+    jar.setCookie(
+        new Cookie({ key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26' }),
+        'https://api.vrchat.cloud'
+    )
+    fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+}
+
+
 console.log("[*] Initializing, login data:");
-console.log(env.USERNAME);
-console.log(env.PASSWORD);
+console.log(env.VRC_USERNAME);
+console.log(env.VRC_PASSWORD);
 
-// const currentUserData = await authenticateUser();
+const currentUserData = await authenticateUser();
+logger.info(currentUserData);
 
-new Elysia()
-    .use(cookie())
-    .use(staticPlugin())
-    .use(html())
-    .get('/', () => {
-
-    })
-    .listen(PORT);
-
-console.log("[*] Listening on http://localhost:" + PORT);
