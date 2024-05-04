@@ -146,16 +146,6 @@ async function authenticateUser(): Promise<any> {
     }
 }
 
-
-async function seeOnlineFriends() {
-    try {
-        const resp = await FriendsApi.getFriends();
-        return resp.data;
-    } catch (e) {
-        console.error(e);
-    }
-}
-
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 function setAuthCookie(authCookie: string) {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
@@ -176,6 +166,16 @@ function setAuthCookie(authCookie: string) {
 }
 
 
+async function seeOnlineFriends() {
+    try {
+        const resp = await FriendsApi.getFriends();
+        return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+
 async function getUserInfo(userId: string) {
     try {
         const resp = await UsersApi.getUser(userId)
@@ -185,17 +185,33 @@ async function getUserInfo(userId: string) {
     }
 }
 
+
+function getAuthCookie() {
+    try
+    {
+        return JSON.parse(cookies).cookies[0].value;
+    }
+    catch (e) {
+        console.error("Error: "+e)
+    }
+    
+}
+
 console.log("[*] Initializing, login data:");
-console.log(env.VRC_USERNAME);
-console.log(env.VRC_PASSWORD);
 
 /*
 const currentUserData = await authenticateUser();
 const friendData = await seeOnlineFriends();
 console.log(friendData);
-*/
 const userData = await getUserInfo("usr_37a5ed4f-ea32-4d7a-9051-cb4883f5e8b0"); //IFritDemonGoat
 console.log(userData)
+*/
 
+
+export 
+{
+    getAuthCookie,
+    getUserInfo
+}
 
 
