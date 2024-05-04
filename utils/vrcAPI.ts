@@ -42,6 +42,8 @@ finally
     axios.defaults.withCredentials = true;
 }
 
+console.log("[*] Initializing, login data");
+
 // Default VRChat API Key, been known for a while
 const API_KEY: string = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
 // User Agent for the VRChat API, otherwise Cloudflare will block you
@@ -80,7 +82,7 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(): Promise<any> {
+async function doLogin(): Promise<vrchat.CurrentUser | undefined>{
     try {
         const resp = await AuthenticationApi.getCurrentUser();
         const currentUser = resp.data;
@@ -91,6 +93,7 @@ async function doLogin(): Promise<any> {
             const verifyResp = await AuthenticationApi.verify2FA({ code: twoFactorCode });
             if (verifyResp.data.verified) {
                 logger.success("Verified Successfully, welcome to VRSpace!");
+                setAuthCookie();
             }
         }
         return resp.data;
@@ -115,56 +118,21 @@ async function doLogin(): Promise<any> {
     }
 }
 
-// This function is needed when retrieving the AuthCookie from the API
-async function authenticateUser(): Promise<any> {
-    const currentUserData = await doLogin();
-    if (!currentUserData) {
-        return null;
-    }
-    try {
-        const auth = await AuthenticationApi.verifyAuthToken(currentUserData.authToken);
-        if (!auth.data.token) {
-            console.error("[✘] Authentication token is invalid");
-            return null;
-        }
-        console.log("[✔︎] Authentication token: ", auth.data.token);
-        // Saving all cookies loaded from the local Axios cookiejar into a JSON file for later use.
-        setAuthCookie(auth.data.token);
-        return auth.data;
-    } catch (e) {
-        const errorResponse = e as any;
-        if (errorResponse.response && errorResponse.response.status) {
-            switch (errorResponse.response.status) {
-                case 400:
-                    console.log("[✘] Token is invalid");
-                    break;
-                case 403:
-                    console.log("[✘] Two factor authentication is required");
-                    break;
-                default:
-                    console.log("[✘] Unknown error, please see the following for more information:");
-                    console.log(errorResponse);
-                    break;
-            }
-        } else {
-            console.log("[✘] Unknown error", errorResponse);
-        }
-        return null;
-    }
-}
-
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
-function setAuthCookie(authCookie: string) {
+function setAuthCookie(authCookie?: string) {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
     if(!jar) {
         console.log("Cookie jar is undefined")
         return;
     }
     // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
-    jar.setCookie(
-        new Cookie({ key: 'auth', value: authCookie }),
-        'https://api.vrchat.cloud'
-    )
+    if(authCookie)
+        {
+            jar.setCookie(
+                new Cookie({ key: 'auth', value: authCookie }),
+                'https://api.vrchat.cloud'
+            )
+        }
     jar.setCookie(
         new Cookie({ key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26' }),
         'https://api.vrchat.cloud'
@@ -227,21 +195,13 @@ function getAuthCookie() {
     
 }
 
-console.log("[*] Initializing, login data:");
-
-/*
-const currentUserData = await authenticateUser();
-const friendData = await seeOnlineFriends();
-console.log(friendData);
-const userData = await getUserInfo("usr_37a5ed4f-ea32-4d7a-9051-cb4883f5e8b0"); //IFritDemonGoat
-console.log(userData)
-*/
-
-
 export 
 {
     getAuthCookie,
     getUserInfo,
     searchUser,
-    getNotifications
+    getNotifications,
+    seeOnlineFriends
 }
+
+doLogin();
