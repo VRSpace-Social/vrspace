@@ -28,6 +28,12 @@ The thing to remember is that the VRChat "SDK" uses Axios under the hood, so we 
 
 So any modification to the cookiejar in Axios, will affect the cookiejar in the VRChat SDK's Axios instance.
 
+Also..
+
+#### KEEP THIS IN MIND!!!
+
+> **The cookies in the cookiejar are very powerful as it can be used to login to the VRChat API, so keep it safe!**
+
 For more information about the cookiejar and cookies in general and their use here, consult the comments on `vrcAPI.ts`.
 
 
