@@ -57,6 +57,7 @@ const configuration: vrchat.Configuration = new vrchat.Configuration({
 const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
 const FriendsApi = new vrchat.FriendsApi(configuration); 
 const UsersApi = new vrchat.UsersApi(configuration);
+const NotificationsApi = new vrchat.NotificationsApi(configuration);
 
 // Login function, this will get technical, so bear with me
 /*
@@ -166,7 +167,7 @@ function setAuthCookie(authCookie: string) {
 }
 
 
-async function seeOnlineFriends() {
+async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined>{
     try {
         const resp = await FriendsApi.getFriends();
         return resp.data;
@@ -176,11 +177,34 @@ async function seeOnlineFriends() {
 }
 
 
-async function getUserInfo(userId: string) {
+async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     try {
         const resp = await UsersApi.getUser(userId)
         return resp.data;
     } catch (e) {
+        console.error(e);
+    }
+}
+
+async function searchUser(username: string, n: string = "50"): Promise<vrchat.LimitedUser[] | undefined>{
+    try {
+        const resp = await UsersApi.searchUsers(username);
+        if(resp)
+            return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function getNotifications(): Promise<vrchat.Notification[] | [] | undefined> {
+    try {
+        const resp = await NotificationsApi.getNotifications();
+        if(resp.data)
+            {
+                return resp.data;
+            }
+    }
+    catch (e) {
         console.error(e);
     }
 }
@@ -211,7 +235,7 @@ console.log(userData)
 export 
 {
     getAuthCookie,
-    getUserInfo
+    getUserInfo,
+    searchUser,
+    getNotifications
 }
-
-
