@@ -14,6 +14,12 @@ let isCookieFileReady: boolean = false;
 const debugType: string = 'error';
 const logger = new LogManager(debugType);
 
+if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") || (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) 
+    {
+        logger.warn("Please set your VRC_USERNAME and VRC_PASSWORD in your .env file")
+        process.exit(1);
+    }
+
 
 // If the cookies file exists, load it
 // Otherwise, throw an error
@@ -57,6 +63,7 @@ const configuration: vrchat.Configuration = new vrchat.Configuration({
 const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
 const FriendsApi = new vrchat.FriendsApi(configuration); 
 const UsersApi = new vrchat.UsersApi(configuration);
+const NotificationsApi = new vrchat.NotificationsApi(configuration);
 
 // Login function, this will get technical, so bear with me
 /*
@@ -146,16 +153,6 @@ async function authenticateUser(): Promise<any> {
     }
 }
 
-
-async function seeOnlineFriends() {
-    try {
-        const resp = await FriendsApi.getFriends();
-        return resp.data;
-    } catch (e) {
-        console.error(e);
-    }
-}
-
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 function setAuthCookie(authCookie: string) {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
@@ -176,7 +173,17 @@ function setAuthCookie(authCookie: string) {
 }
 
 
-async function getUserInfo(userId: string) {
+async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined>{
+    try {
+        const resp = await FriendsApi.getFriends();
+        return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+
+async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     try {
         const resp = await UsersApi.getUser(userId)
         return resp.data;
@@ -185,17 +192,56 @@ async function getUserInfo(userId: string) {
     }
 }
 
+async function searchUser(username: string, n: string = "50"): Promise<vrchat.LimitedUser[] | undefined>{
+    try {
+        const resp = await UsersApi.searchUsers(username);
+        if(resp)
+            return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function getNotifications(): Promise<vrchat.Notification[] | [] | undefined> {
+    try {
+        const resp = await NotificationsApi.getNotifications();
+        if(resp.data)
+            {
+                return resp.data;
+            }
+    }
+    catch (e) {
+        console.error(e);
+    }
+}
+
+
+function getAuthCookie() {
+    try
+    {
+        return JSON.parse(cookies).cookies[0].value;
+    }
+    catch (e) {
+        console.error("Error: "+e)
+    }
+    
+}
+
 console.log("[*] Initializing, login data:");
-console.log(env.VRC_USERNAME);
-console.log(env.VRC_PASSWORD);
 
 /*
 const currentUserData = await authenticateUser();
 const friendData = await seeOnlineFriends();
 console.log(friendData);
-*/
 const userData = await getUserInfo("usr_37a5ed4f-ea32-4d7a-9051-cb4883f5e8b0"); //IFritDemonGoat
 console.log(userData)
+*/
 
 
-
+export 
+{
+    getAuthCookie,
+    getUserInfo,
+    searchUser,
+    getNotifications
+}
