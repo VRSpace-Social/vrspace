@@ -14,6 +14,12 @@ let isCookieFileReady: boolean = false;
 const debugType: string = 'error';
 const logger = new LogManager(debugType);
 
+if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") || (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) 
+    {
+        logger.warn("Please set your VRC_USERNAME and VRC_PASSWORD in your .env file")
+        process.exit(1);
+    }
+
 
 // If the cookies file exists, load it
 // Otherwise, throw an error

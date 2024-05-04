@@ -69,6 +69,7 @@ async function doRunWS(authCookie: string): Promise<void>
             }
 
             case "friend-online": {
+                console.log(JSON.parse(event.data.toString()).content);
                 let friendUsername: string = JSON.parse(JSON.parse(event.data.toString()).content).displayName;
                 console.log("##########################");
                 console.log("#                        #");
