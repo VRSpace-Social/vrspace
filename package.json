@@ -5,6 +5,12 @@
   "devDependencies": {
     "@types/bun": "latest"
   },
+  "scripts": {
+    "build": "tsc",
+    "start": "bun index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "bun scratch/testZone.ts"
+  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },

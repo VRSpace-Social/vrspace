@@ -32,6 +32,10 @@ export class LogManager {
             this.logDir = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : '/tmp') || (process.platform === 'linux' ? process.env.HOME + '/.local/share' : '/tmp/');
         }
 
+        if (!fs.existsSync(this.logDir)) {
+            fs.mkdirSync(this.logDir);
+        }
+
         this.logDir = path.join(this.logDir, 'vrspace');
         this.logFilePath = path.join(this.logDir, this.logFileName);
 

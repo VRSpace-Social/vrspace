@@ -163,14 +163,16 @@ function setAuthCookie(authCookie?: string): void {
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
 }
 
+/**
+ * Deletes the cookie file.
+ *
+ * @returns {void}
+ */
 function deleteCookieFile(): void {
-    try
-    {
+    try {
         fs.unlinkSync("./cookies.json");
         logger.success("Cookies file deleted")
-    }
-    catch (e)
-    {
+    } catch (e) {
         console.error("Error: "+e)
     }
 }
@@ -186,17 +188,24 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined> {
         const resp: AxiosResponse<vrchat.LimitedUser[]> = await FriendsApi.getFriends();
         return resp.data;
     } catch (e) {
-        if(axios.isAxiosError(e))
+        if(axios.isAxiosError(e)) {
             if(e.response?.status === 401) {
-                    console.log("[✘] Token maybe invalid");
-                    await doLogin(true);
+                console.log("[✘] Token maybe invalid");
+                await doLogin(true);
             }
+        }
         else
             console.error(e);
     }
 }
 
 
+/**
+ * Retrieves user information from the VRChat API.
+ *
+ * @param {string} userId - The ID of the user to retrieve information for.
+ * @returns {Promise<vrchat.User | undefined>} - A Promise that resolves with the user information if found, otherwise undefined.
+ */
 async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     try {
         const resp: AxiosResponse<vrchat.User> = await UsersApi.getUser(userId)
@@ -206,6 +215,12 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     }
 }
 
+/**
+ * Searches for users by the given username.
+ *
+ * @param {string} username - The username to search for.
+ * @return {Promise<vrchat.LimitedUser[] | undefined>} - A promise that resolves with an array of LimitedUser objects if the search is successful, or undefined if the search fails.
+ */
 async function searchUser(username: string): Promise<vrchat.LimitedUser[] | undefined>{
     try {
         const resp: AxiosResponse<vrchat.LimitedUser[]> = await UsersApi.searchUsers(username)
@@ -216,23 +231,33 @@ async function searchUser(username: string): Promise<vrchat.LimitedUser[] | unde
     }
 }
 
+
+/**
+ * Retrieves notifications from the server.
+ *
+ * @returns {Promise<vrchat.Notification[] | [] | undefined>} A promise that resolves to an array of notifications, or an empty array, or undefined if an error occurs.
+ */
 async function getNotifications(): Promise<vrchat.Notification[] | [] | undefined> {
     try {
         const resp: AxiosResponse<vrchat.Notification[]> = await NotificationsApi.getNotifications();
-        if(resp.data)
-            {
-                return resp.data;
-            }
-    }
-    catch (e) {
+        return resp.data;
+    } catch (e) {
         console.error(e);
     }
 }
 
+/**
+ * Perform logout operation
+ *
+ * @param {boolean} deleteCookies - Optional parameter to delete cookies
+ * @return {Promise<void>} A promise that resolves when the logout operation is complete
+ *
+ * @throws {Error} If an error occurs during the logout operation
+ */
 async function doLogout(deleteCookies?: boolean): Promise<void> {
     try {
         const resp: AxiosResponse<vrchat.Success> = await AuthenticationApi.logout();
-        console.log(resp.data);
+        logger.info(resp.data);
         if(deleteCookies)
             deleteCookieFile();
     } catch (e) {
@@ -241,12 +266,17 @@ async function doLogout(deleteCookies?: boolean): Promise<void> {
 }
 
 
-function getAuthCookie() {
-    try
-    {
+/**
+ * Get the authentication cookie value from the "cookies" global variable.
+ * The value is parsed from JSON format.
+ *
+ * @returns {string} The authentication cookie value.
+ * @throws {Error} If there is an error while parsing the cookie value.
+ */
+function getAuthCookie(): string | undefined {
+    try {
         return JSON.parse(cookies).cookies[0].value;
-    }
-    catch (e) {
+    } catch (e) {
         console.error("Error: "+e)
     }
     
