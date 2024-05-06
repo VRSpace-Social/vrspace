@@ -4,6 +4,7 @@ import { env } from "bun";
 import * as fs from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
+import type { AxiosResponse } from "axios";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -17,7 +18,7 @@ let cookies: string;
 
 // Logger Stuff
 const debugType: string = 'error';
-const logger = new LogManager(debugType);
+const logger: LogManager = new LogManager(debugType);
 console.log(logger.returnLogDirectory())
 
 
@@ -69,10 +70,10 @@ const configuration: vrchat.Configuration = new vrchat.Configuration({
 });
 
 // API Methods 
-const AuthenticationApi = new vrchat.AuthenticationApi(configuration);
-const FriendsApi = new vrchat.FriendsApi(configuration); 
-const UsersApi = new vrchat.UsersApi(configuration);
-const NotificationsApi = new vrchat.NotificationsApi(configuration);
+const AuthenticationApi: vrchat.AuthenticationApi = new vrchat.AuthenticationApi(configuration);
+const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
+const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
+const NotificationsApi: vrchat.NotificationsApi = new vrchat.NotificationsApi(configuration);
 
 // Login function, this will get technical, so bear with me
 /*
@@ -89,16 +90,16 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(doForce2FA?: boolean): Promise<vrchat.CurrentUser | undefined>{
-    console.log(doForce2FA)
+async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undefined>{
+    console.log(forceLogin)
     try {
-        const resp = await AuthenticationApi.getCurrentUser();
-        const currentUser = resp.data;
-        if(doForce2FA) {
-            console.log("[*] Forcing 2FA")
+        const resp: AxiosResponse<vrchat.CurrentUser> = await AuthenticationApi.getCurrentUser();
+        const currentUser: vrchat.CurrentUser = resp.data;
+        if(forceLogin) {
+            console.log("[*] Forcing 2FA Login and save cookies")
             deleteCookieFile();
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
-            const verifyResp = await AuthenticationApi.verify2FA({ code: twoFactorCode });
+            const verifyResp: AxiosResponse<vrchat.Verify2FAResult> = await AuthenticationApi.verify2FA({ code: twoFactorCode });
             if (verifyResp.data.verified) {
                 logger.success("Verified Successfully, welcome to VRSpace!");
                 setAuthCookie();
@@ -138,22 +139,21 @@ async function doLogin(doForce2FA?: boolean): Promise<vrchat.CurrentUser | undef
 }
 
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
-function setAuthCookie(authCookie?: string) {
+function setAuthCookie(authCookie?: string): void {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
     if(!jar) {
         console.log("Cookie jar is undefined")
         return;
     }
     // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
-    if(authCookie)
-        {
-            jar.setCookie(
-                new Cookie({key: 'auth', value: authCookie}),
-                'https://api.vrchat.cloud'
-            ).then(() => {
-                logger.debug("AuthCookie set")
-            });
-         }
+    if(authCookie) {
+        jar.setCookie(
+            new Cookie({key: 'auth', value: authCookie}),
+            'https://api.vrchat.cloud'
+        ).then(() => {
+            logger.debug("AuthCookie set")
+        });
+    }
     jar.setCookie(
         new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
         'https://api.vrchat.cloud'
@@ -163,7 +163,7 @@ function setAuthCookie(authCookie?: string) {
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
 }
 
-function deleteCookieFile() {
+function deleteCookieFile(): void {
     try
     {
         fs.unlinkSync("./cookies.json");
@@ -176,9 +176,14 @@ function deleteCookieFile() {
 }
 
 
-async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined>{
+/**
+ * Retrieves the list of online friends.
+ *
+ * @returns {Promise<vrchat.LimitedUser[] | undefined>} A promise that resolves to an array of online friends. If an error occurs, the promise will resolve to undefined.
+ */
+async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined> {
     try {
-        const resp = await FriendsApi.getFriends();
+        const resp: AxiosResponse<vrchat.LimitedUser[]> = await FriendsApi.getFriends();
         return resp.data;
     } catch (e) {
         if(axios.isAxiosError(e))
@@ -194,7 +199,7 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined>{
 
 async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     try {
-        const resp = await UsersApi.getUser(userId)
+        const resp: AxiosResponse<vrchat.User> = await UsersApi.getUser(userId)
         return resp.data;
     } catch (e) {
         console.error(e);
@@ -203,7 +208,7 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
 
 async function searchUser(username: string): Promise<vrchat.LimitedUser[] | undefined>{
     try {
-        const resp = await UsersApi.searchUsers(username)
+        const resp: AxiosResponse<vrchat.LimitedUser[]> = await UsersApi.searchUsers(username)
         if(resp)
             return resp.data;
     } catch (e) {
@@ -213,7 +218,7 @@ async function searchUser(username: string): Promise<vrchat.LimitedUser[] | unde
 
 async function getNotifications(): Promise<vrchat.Notification[] | [] | undefined> {
     try {
-        const resp = await NotificationsApi.getNotifications();
+        const resp: AxiosResponse<vrchat.Notification[]> = await NotificationsApi.getNotifications();
         if(resp.data)
             {
                 return resp.data;
@@ -224,11 +229,12 @@ async function getNotifications(): Promise<vrchat.Notification[] | [] | undefine
     }
 }
 
-async function doLogout(): Promise<void> {
+async function doLogout(deleteCookies?: boolean): Promise<void> {
     try {
-        const resp = await AuthenticationApi.logout();
+        const resp: AxiosResponse<vrchat.Success> = await AuthenticationApi.logout();
         console.log(resp.data);
-        //deleteCookieFile();
+        if(deleteCookies)
+            deleteCookieFile();
     } catch (e) {
         console.error(e);
     }
