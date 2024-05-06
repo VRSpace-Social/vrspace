@@ -1,4 +1,4 @@
-import { getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends } from '../utils/vrcAPI';
+import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends } from '../utils/vrcAPI';
 
 async function main()
 {
@@ -10,9 +10,19 @@ async function main()
     const resp = await searchUser("Wynter 7");
     console.log(resp);
     */
-    const resp2  = await getNotifications();
+    const resp2  = await seeOnlineFriends();
     console.log(resp2);
     
+    //const resp3 = await doLogout();
+    //console.log(resp3);
+}
+
+
+async function main2()
+{
+    const resp = await doLogin().then(async () => {
+        console.log("logged in"); 
+    });
 }
 
 main();

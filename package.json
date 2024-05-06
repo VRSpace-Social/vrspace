@@ -12,7 +12,7 @@
     "@elysiajs/cookie": "^0.8.0",
     "@elysiajs/html": "^1.0.2",
     "@elysiajs/static": "^1.0.3",
-    "axios-cookiejar-support": "^5.0.1",
+    "axios-cookiejar-support": "^5.0.2",
     "date-fns": "^3.6.0",
     "elysia": "^1.0.16",
     "tough-cookie": "^4.1.4",

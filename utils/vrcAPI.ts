@@ -82,10 +82,20 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(): Promise<vrchat.CurrentUser | undefined>{
+async function doLogin(doForce2FA?: boolean): Promise<vrchat.CurrentUser | undefined>{
     try {
         const resp = await AuthenticationApi.getCurrentUser();
         const currentUser = resp.data;
+        if(doForce2FA) {
+            console.log("[*] Forcing 2FA")
+            deleteCookieFile();
+            const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
+            const verifyResp = await AuthenticationApi.verify2FA({ code: twoFactorCode });
+            if (verifyResp.data.verified) {
+                logger.success("Verified Successfully, welcome to VRSpace!");
+                setAuthCookie();
+            }
+        }
         if (!currentUser.displayName) {
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
             logger.debug(`Two factor code: ${twoFactorCode}`);
@@ -140,13 +150,31 @@ function setAuthCookie(authCookie?: string) {
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
 }
 
+function deleteCookieFile() {
+    try
+    {
+        fs.unlinkSync("./cookies.json");
+        logger.success("Cookies file deleted")
+    }
+    catch (e)
+    {
+        console.error("Error: "+e)
+    }
+}
+
 
 async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined>{
     try {
         const resp = await FriendsApi.getFriends();
         return resp.data;
     } catch (e) {
-        console.error(e);
+        if(axios.isAxiosError(e))
+            if(e.response?.status === 401) {
+                    console.log("[✘] Token maybe invalid");
+                    doLogin(true);
+            }
+        else
+            console.error(e);
     }
 }
 
@@ -183,6 +211,16 @@ async function getNotifications(): Promise<vrchat.Notification[] | [] | undefine
     }
 }
 
+async function doLogout(): Promise<void> {
+    try {
+        const resp = await AuthenticationApi.logout();
+        console.log(resp.data);
+        //deleteCookieFile();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 
 function getAuthCookie() {
     try
@@ -201,7 +239,7 @@ export
     getUserInfo,
     searchUser,
     getNotifications,
-    seeOnlineFriends
+    seeOnlineFriends,
+    doLogout,
+    doLogin
 }
-
-doLogin();
