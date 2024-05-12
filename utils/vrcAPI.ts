@@ -1,10 +1,11 @@
 import * as vrchat from "vrchat";
 import { LogManager } from './logger';
-import { env } from "bun";
+import { env, sleep } from "bun";
 import * as fs from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
+import { routes } from '../routes/main.routes';
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -21,13 +22,19 @@ const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType);
 console.log(logger.returnLogDirectory())
 
-
-if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
-    (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password") ||
-    (!await Bun.file('./.env').exists())) {
+if(await Bun.file('./.env').exists()) {
+    if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
+    (!env.VRC_USERNAME || !env.VRC_PASSWORD) ||
+    (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) {
         logger.warn("Please set your VRC_USERNAME and VRC_PASSWORD in your .env file")
         process.exit(1);
     }
+}
+else {
+    logger.warn("Please create your .env file")
+    process.exit(1);
+}
+
 
 
 // If the cookies file exists, load it
@@ -138,6 +145,13 @@ async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undef
     }
 }
 
+
+async function loginAndSaveCookies(): Promise<void> {
+    await doLogin(true).then(() => {
+        setAuthCookie();
+    });
+}
+
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 function setAuthCookie(authCookie?: string): void {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
@@ -161,6 +175,7 @@ function setAuthCookie(authCookie?: string): void {
         logger.debug("APIKey set")
     });
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+    logger.success("Cookies file saved")
 }
 
 /**
@@ -273,13 +288,17 @@ async function doLogout(deleteCookies?: boolean): Promise<void> {
  * @returns {string} The authentication cookie value.
  * @throws {Error} If there is an error while parsing the cookie value.
  */
-function getAuthCookie(): string | undefined {
-    try {
-        return JSON.parse(cookies).cookies[0].value;
-    } catch (e) {
-        console.error("Error: "+e)
+async function getAuthCookie(): Promise<string> {
+    if(await Bun.file('./cookies.json').exists()) {
+        try {            
+            return JSON.parse(cookies).cookies[0].value;
+        } catch (e) {
+            console.error("Error: "+e);
+            throw new Error("Error while parsing the cookie value")}
+    } else {
+        console.log("No cookies file found")
+        return "NOT_FOUND";
     }
-    
 }
 
 export 
@@ -290,5 +309,6 @@ export
     getNotifications,
     seeOnlineFriends,
     doLogout,
-    doLogin
+    doLogin,
+    loginAndSaveCookies
 }

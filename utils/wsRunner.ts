@@ -1,12 +1,31 @@
-import type { User } from "vrchat";
-import { getAuthCookie, getUserInfo } from "./vrcAPI";
+import type { CurrentUser, User } from "vrchat";
+import { getAuthCookie, getUserInfo, loginAndSaveCookies } from "./vrcAPI";
 import WebSocket from "ws";
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
-const authCookie: string = getAuthCookie();
+let authCookie: string = await getAuthCookie() || "NOT_FOUND";
+console.log("Auth cookie: " + authCookie);
+
+
 
 async function doRunWS(authCookie: string): Promise<void> 
 {
+    if(authCookie === "NOT_FOUND") {
+        console.log("No auth cookie found, retrying and checking again for 10 times");
+        await loginAndSaveCookies();
+        for(let i = 0; i < 10; i++) {
+            console.log("TRY N:"+i);
+            authCookie = await getAuthCookie();
+            if(authCookie !== "NOT_FOUND") {
+                console.log("FOUND!!! : " + authCookie);
+                break;
+            } else {
+                console.log("No auth cookie found, please login first");
+                throw new Error("No auth cookie found, please login first");
+            }
+        }
+        
+    }
     console.log("Trying to connect with auth cookie: " + authCookie);
 
     const socket: WebSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + authCookie, {
@@ -80,9 +99,16 @@ async function doRunWS(authCookie: string): Promise<void>
             }
 
             default: {
-                console.log("Unknown message type: " + JSON.parse(event.data.toString()).type);
-                console.log(JSON.parse(JSON.parse(event.data.toString()).content));
-                break;
+                try{
+                    console.log("Unknown message type: " + JSON.parse(event.data.toString()).type);
+                    console.log(JSON.parse(JSON.parse(event.data.toString()).content));
+                } catch(e) {
+                    console.log("Error while trying to parse message: " + e)
+                    console.log(JSON.parse(event.data.toString()));
+                }
+                finally {
+                    break;
+                }
             }
 
         }
@@ -94,6 +120,10 @@ async function doRunWS(authCookie: string): Promise<void>
     });
 }
 
-doRunWS(authCookie).then(() => console.log("done"));
+doRunWS(authCookie).catch(e => {
+    console.log("Error while trying to connect to VRChat Websocket");
+    console.log(e);
+    return;
+}).then(() => console.log("done"));
 
 export { doRunWS }
