@@ -1,23 +1,29 @@
-import type { CurrentUser, User } from "vrchat";
+import type { User } from "vrchat";
 import { getAuthCookie, getUserInfo, loginAndSaveCookies } from "./vrcAPI";
 import WebSocket from "ws";
+import { LogManager } from './logger';
+
+// Logger Stuff
+const debugType: string = 'error';
+const logger: LogManager = new LogManager(debugType);
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
 let authCookie: string = await getAuthCookie() || "NOT_FOUND";
-console.log("Auth cookie: " + authCookie);
-
-
 
 async function doRunWS(authCookie: string): Promise<void> 
 {
     if(authCookie === "NOT_FOUND") {
-        console.log("No auth cookie found, retrying and checking again for 10 times");
-        await loginAndSaveCookies();
+        console.log("No authCookie found, creating cookie file and retrying to retrieve authCookie again for 10 times");
+        let onlyWS = prompt("Do you want to only run the WS? (Y/N)");
+        if(onlyWS === "Y" || onlyWS === "y") {
+            await loginAndSaveCookies(true);
+        } else {
+            await loginAndSaveCookies();
+        }
         for(let i = 0; i < 10; i++) {
             console.log("TRY N:"+i);
             authCookie = await getAuthCookie();
             if(authCookie !== "NOT_FOUND") {
-                console.log("FOUND!!! : " + authCookie);
                 break;
             } else {
                 console.log("No auth cookie found, please login first");
@@ -26,8 +32,6 @@ async function doRunWS(authCookie: string): Promise<void>
         }
         
     }
-    console.log("Trying to connect with auth cookie: " + authCookie);
-
     const socket: WebSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + authCookie, {
         headers: {
             "User-Agent": USER_AGENT
@@ -77,6 +81,7 @@ async function doRunWS(authCookie: string): Promise<void>
             }
 
             case "friend-delete": {
+                logger.info(event.data.toString());
                 let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId);
                 if(friendData === undefined) {
                     console.log("Friend is not found");
@@ -101,7 +106,7 @@ async function doRunWS(authCookie: string): Promise<void>
             default: {
                 try{
                     console.log("Unknown message type: " + JSON.parse(event.data.toString()).type);
-                    console.log(JSON.parse(JSON.parse(event.data.toString()).content));
+                    logger.log(JSON.parse(JSON.parse(event.data.toString()).content));
                 } catch(e) {
                     console.log("Error while trying to parse message: " + e)
                     console.log(JSON.parse(event.data.toString()));
@@ -124,6 +129,6 @@ doRunWS(authCookie).catch(e => {
     console.log("Error while trying to connect to VRChat Websocket");
     console.log(e);
     return;
-}).then(() => console.log("done"));
+}).then(() => console.log("Running WS.."));
 
 export { doRunWS }

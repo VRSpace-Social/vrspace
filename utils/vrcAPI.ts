@@ -5,7 +5,6 @@ import * as fs from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
-import { routes } from '../routes/main.routes';
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -20,7 +19,6 @@ let cookies: string;
 // Logger Stuff
 const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType);
-console.log(logger.returnLogDirectory())
 
 if(await Bun.file('./.env').exists()) {
     if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
@@ -97,13 +95,16 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undefined>{
-    console.log(forceLogin)
+async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Promise<vrchat.CurrentUser | undefined>{
     try {
         const resp: AxiosResponse<vrchat.CurrentUser> = await AuthenticationApi.getCurrentUser();
         const currentUser: vrchat.CurrentUser = resp.data;
+        if(onlySaveAuthCookie) { 
+            setAuthCookie();
+            return;
+        }
         if(forceLogin) {
-            console.log("[*] Forcing 2FA Login and save cookies")
+            ("[*] Forcing 2FA Login and save cookies")
             deleteCookieFile();
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
             const verifyResp: AxiosResponse<vrchat.Verify2FAResult> = await AuthenticationApi.verify2FA({ code: twoFactorCode });
@@ -146,10 +147,13 @@ async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undef
 }
 
 
-async function loginAndSaveCookies(): Promise<void> {
-    await doLogin(true).then(() => {
-        setAuthCookie();
-    });
+async function loginAndSaveCookies(onylWS?: boolean): Promise<void> {
+    if(onylWS) {
+        await doLogin(false, true);
+    } else {
+        await doLogin(true);
+    }
+    
 }
 
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
@@ -288,10 +292,18 @@ async function doLogout(deleteCookies?: boolean): Promise<void> {
  * @returns {string} The authentication cookie value.
  * @throws {Error} If there is an error while parsing the cookie value.
  */
-async function getAuthCookie(): Promise<string> {
-    if(await Bun.file('./cookies.json').exists()) {
-        try {            
-            return JSON.parse(cookies).cookies[0].value;
+async function getAuthCookie(): Promise<string> {    
+    if(await Bun.file('./cookies.json').exists()) {        
+        try {
+            const cookies = await Bun.file('./cookies.json').json();
+            for(let i = 0; i < cookies.cookies.length; i++) {                
+                if(cookies.cookies[i].key === 'auth') {
+                    let authCookie: string = cookies.cookies[i].value;
+                    return authCookie;
+                }
+            }
+            console.log("No auth cookie found, please login first")
+            return "NOT_FOUND";            
         } catch (e) {
             console.error("Error: "+e);
             throw new Error("Error while parsing the cookie value")}
