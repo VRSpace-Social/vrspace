@@ -36,7 +36,7 @@ async function doRunWS(authCookie: string): Promise<void>
                 let jsonData: User = JSON.parse(JSON.parse(event.data.toString()).content).user;
                 console.log("##########################");
                 console.log("#                        #");
-                console.log(jsonData.displayName + " is online on VRchat Website/API");
+                console.log(jsonData.displayName + " is online on VRChat Website/API");
                 console.log("#                        #");
                 console.log("##########################");
                 break;
@@ -94,6 +94,6 @@ async function doRunWS(authCookie: string): Promise<void>
     });
 }
 
-doRunWS(authCookie);
+doRunWS(authCookie).then(() => console.log("done"));
 
 export { doRunWS }

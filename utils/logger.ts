@@ -32,8 +32,11 @@ export class LogManager {
             this.logDir = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : '/tmp') || (process.platform === 'linux' ? process.env.HOME + '/.local/share' : '/tmp/');
         }
 
+        if (!fs.existsSync(this.logDir)) {
+            fs.mkdirSync(this.logDir);
+        }
+
         this.logDir = path.join(this.logDir, 'vrspace');
-        console.log('[LOGGER] - Log directory: ' + this.logDir);
         this.logFilePath = path.join(this.logDir, this.logFileName);
 
         // If directory does not exist, create it
@@ -63,14 +66,14 @@ export class LogManager {
     }
 
     info(message: any): void {
-        var stream = this.openFile();
+        let stream = this.openFile();
         stream.write(this.logLine('INFO', message));
         this.closeFile(stream);
         this.logToConsole(message);
     }
 
     success(message: any): void {
-        var stream = this.openFile();
+        let stream = this.openFile();
         stream.write(this.logLine('✔︎', message));
         this.closeFile(stream);
         this.logToConsole(message);
@@ -78,7 +81,7 @@ export class LogManager {
 
     debug(message: any): void {
         if (this.debugType) {
-            var stream = this.openFile();
+            let stream = this.openFile();
             stream.write(this.logLine('DEBUG', message));
             this.closeFile(stream);
             this.logToConsole("[!] DEBUG [!] - " + message);
@@ -86,7 +89,7 @@ export class LogManager {
     }
 
     error(exception: any): void {
-        var stream = this.openFile();
+        let stream = this.openFile();
         stream.write(this.logLine('ERROR', exception.message));
         this.closeFile(stream);
         stream = this.openFile();
@@ -97,14 +100,14 @@ export class LogManager {
     }
 
     warn(message: any): void {
-        var stream = this.openFile();
+        let stream = this.openFile();
         stream.write(this.logLine('WARN', message));
         this.closeFile(stream);
-        this.logToConsole(message);
+        this.logToConsole("[WARN] - " + message);
     }
 
     log(message: any): void {
-        var stream = this.openFile();
+        let stream = this.openFile();
         stream.write(this.logLine('INFO', message));
         this.closeFile(stream);
         this.logToConsole(message);

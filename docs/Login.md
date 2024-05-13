@@ -44,4 +44,7 @@ If you want to experiment with some code you added to `vrcAPI.ts`, please add yo
 To ensure that the main `vrcAPI.ts` its kept clean.
 
 
+## Example code to get comfy with the login process
+We've provided you with a example file for testing and learning how the login process works, in two ways: A simple one and a manual one.
 
+You can find the example file is in `example/showFriends.ts`
