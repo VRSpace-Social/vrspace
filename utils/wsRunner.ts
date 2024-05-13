@@ -8,11 +8,11 @@ const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType);
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
-let authCookie: string = await getAuthCookie() || "NOT_FOUND";
 
-async function doRunWS(authCookie: string): Promise<void> 
-{
-    if(authCookie === "NOT_FOUND") {
+async function loginAndRun(): Promise<void> {
+    return getAuthCookie().then(async (cookie) => {
+        return runWS(cookie);
+    }).catch(async () => {
         console.log("No authCookie found, creating cookie file and retrying to retrieve authCookie again for 10 times");
         let onlyWS = prompt("Do you want to only run the WS? (Y/N)");
         if(onlyWS === "Y" || onlyWS === "y") {
@@ -20,41 +20,33 @@ async function doRunWS(authCookie: string): Promise<void>
         } else {
             await loginAndSaveCookies();
         }
-        for(let i = 0; i < 10; i++) {
-            console.log("TRY N:"+i);
-            authCookie = await getAuthCookie();
-            if(authCookie !== "NOT_FOUND") {
-                break;
-            } else {
-                console.log("No auth cookie found, please login first");
-                throw new Error("No auth cookie found, please login first");
-            }
-        }
-        
-    }
-    const socket: WebSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + authCookie, {
+        return loginAndRun();
+    });
+}
+
+async function runWS(cookies: string) {
+    const socket: WebSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + cookies, {
         headers: {
             "User-Agent": USER_AGENT
-    }});
-    
+        }
+    });
     socket.addEventListener('open', () => {
         console.log("Connected to VRChat Websocket");
     });
-    
     socket.addEventListener("message", async (event) => {
         console.log("Message from VRC WSS server! ");
 
         /*
-        TODO:
-        Types to still implement:
-        - friend-update
-        - friend-location
+           TODO:
+           Types to still implement:
+           - friend-update
+           - friend-location
 
-        Groups, Notifications, notification-v2, Users, content-refresh, instance-queue-joined, instance-queue-ready
-        */
+           Groups, Notifications, notification-v2, Users, content-refresh, instance-queue-joined, instance-queue-ready
+           */
 
         switch (JSON.parse(event.data.toString()).type) {
-            
+
             case "friend-active": {
                 let jsonData: User = JSON.parse(JSON.parse(event.data.toString()).content).user;
                 console.log("##########################");
@@ -111,24 +103,21 @@ async function doRunWS(authCookie: string): Promise<void>
                     console.log("Error while trying to parse message: " + e)
                     console.log(JSON.parse(event.data.toString()));
                 }
-                finally {
-                    break;
-                }
             }
 
         }
         console.log("#####################")
     });
-    
+
     socket.addEventListener('close', () => {
         console.log('Server connection closed');
     });
 }
 
-doRunWS(authCookie).catch(e => {
+loginAndRun().catch(e => {
     console.log("Error while trying to connect to VRChat Websocket");
     console.log(e);
     return;
 }).then(() => console.log("Running WS.."));
 
-export { doRunWS }
+export { loginAndRun }

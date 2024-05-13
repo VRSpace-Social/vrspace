@@ -292,25 +292,17 @@ async function doLogout(deleteCookies?: boolean): Promise<void> {
  * @returns {string} The authentication cookie value.
  * @throws {Error} If there is an error while parsing the cookie value.
  */
-async function getAuthCookie(): Promise<string> {    
-    if(await Bun.file('./cookies.json').exists()) {        
-        try {
-            const cookies = await Bun.file('./cookies.json').json();
-            for(let i = 0; i < cookies.cookies.length; i++) {                
-                if(cookies.cookies[i].key === 'auth') {
-                    let authCookie: string = cookies.cookies[i].value;
-                    return authCookie;
-                }
-            }
-            console.log("No auth cookie found, please login first")
-            return "NOT_FOUND";            
-        } catch (e) {
-            console.error("Error: "+e);
-            throw new Error("Error while parsing the cookie value")}
-    } else {
-        console.log("No cookies file found")
-        return "NOT_FOUND";
-    }
+async function getAuthCookie(): Promise<string> {
+    let cookieFile = Bun.file('./cookies.json');
+    return cookieFile.exists().then(async (exists) => {
+        if (exists) {
+            return cookieFile.json().then((data) => {
+                return data.cookies.find((cookie: any) => cookie.key === "auth").value;
+            });
+        } else {
+            throw new Error("No auth cookie found, please login first");
+        }
+    });
 }
 
 export 
