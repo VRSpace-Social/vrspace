@@ -19,15 +19,20 @@ let cookies: string;
 // Logger Stuff
 const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType);
-console.log(logger.returnLogDirectory())
 
-
-if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
-    (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password") ||
-    (!await Bun.file('./.env').exists())) {
+if(await Bun.file('./.env').exists()) {
+    if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
+    (!env.VRC_USERNAME || !env.VRC_PASSWORD) ||
+    (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) {
         logger.warn("Please set your VRC_USERNAME and VRC_PASSWORD in your .env file")
         process.exit(1);
     }
+}
+else {
+    logger.warn("Please create your .env file")
+    process.exit(1);
+}
+
 
 
 // If the cookies file exists, load it
@@ -90,13 +95,16 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undefined>{
-    console.log(forceLogin)
+async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Promise<vrchat.CurrentUser | undefined>{
     try {
         const resp: AxiosResponse<vrchat.CurrentUser> = await AuthenticationApi.getCurrentUser();
         const currentUser: vrchat.CurrentUser = resp.data;
+        if(onlySaveAuthCookie) { 
+            setAuthCookie();
+            return;
+        }
         if(forceLogin) {
-            console.log("[*] Forcing 2FA Login and save cookies")
+            logger.info("[*] Forcing 2FA Login and save cookies")
             deleteCookieFile();
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
             const verifyResp: AxiosResponse<vrchat.Verify2FAResult> = await AuthenticationApi.verify2FA({ code: twoFactorCode });
@@ -138,6 +146,16 @@ async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser | undef
     }
 }
 
+
+async function loginAndSaveCookies(onylWS?: boolean): Promise<void> {
+    if(onylWS) {
+        await doLogin(false, true);
+    } else {
+        await doLogin(true);
+    }
+    
+}
+
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 function setAuthCookie(authCookie?: string): void {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
@@ -161,6 +179,7 @@ function setAuthCookie(authCookie?: string): void {
         logger.debug("APIKey set")
     });
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+    logger.success("Cookies file saved")
 }
 
 /**
@@ -273,13 +292,17 @@ async function doLogout(deleteCookies?: boolean): Promise<void> {
  * @returns {string} The authentication cookie value.
  * @throws {Error} If there is an error while parsing the cookie value.
  */
-function getAuthCookie(): string | undefined {
-    try {
-        return JSON.parse(cookies).cookies[0].value;
-    } catch (e) {
-        console.error("Error: "+e)
-    }
-    
+async function getAuthCookie(): Promise<string> {
+    let cookieFile = Bun.file('./cookies.json');
+    return cookieFile.exists().then(async (exists) => {
+        if (exists) {
+            return cookieFile.json().then((data) => {
+                return data.cookies.find((cookie: any) => cookie.key === "auth").value;
+            });
+        } else {
+            throw new Error("No auth cookie found, please login first");
+        }
+    });
 }
 
 export 
@@ -290,5 +313,6 @@ export
     getNotifications,
     seeOnlineFriends,
     doLogout,
-    doLogin
+    doLogin,
+    loginAndSaveCookies
 }
