@@ -1,6 +1,6 @@
 import * as vrchat from "vrchat";
 import { LogManager } from './logger';
-import { env, sleep } from "bun";
+import { env } from "bun";
 import * as fs from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
@@ -104,7 +104,7 @@ async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Prom
             return;
         }
         if(forceLogin) {
-            ("[*] Forcing 2FA Login and save cookies")
+            logger.info("[*] Forcing 2FA Login and save cookies")
             deleteCookieFile();
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
             const verifyResp: AxiosResponse<vrchat.Verify2FAResult> = await AuthenticationApi.verify2FA({ code: twoFactorCode });
