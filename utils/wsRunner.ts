@@ -58,8 +58,10 @@ async function runWS(cookies: string) {
             }
 
             case "friend-offline": {
-                logger.debug(event.data.toString());
-                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId);
+                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
+                    console.log("[!!] ERROR on"+JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
+                    return undefined;
+                });
                 if(friendData === undefined) {
                     logger.warn("Friend is not found");
                     break;
@@ -74,8 +76,11 @@ async function runWS(cookies: string) {
             }
 
             case "friend-delete": {
-                logger.debug(event.data.toString());
-                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId);
+                logger.info(event.data.toString());
+                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
+                    console.log("[!!] ERROR on"+JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
+                    return undefined;
+                });
                 if(friendData === undefined) {
                     logger.warn("Friend is not found");
                     break;

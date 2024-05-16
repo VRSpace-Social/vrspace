@@ -40,7 +40,7 @@ else {
 // In any case, set the axios defaults since we need that to attach to VRC axios instance to use the cookies
 try
 {
-    cookies = fs.readFileSync("./cookies.json", "utf-8");
+    cookies = fs.readFileSync("./cookies.json", "utf8");
     if (cookies !== "") {
         axios.defaults.jar = CookieJar.fromJSON(JSON.parse(cookies));
     }
@@ -58,7 +58,7 @@ finally
 logger.info("Creating VRC Login vars and client");
 
 // Default VRChat API Key, been known for a while
-const API_KEY: string = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
+const VRC: string | undefined = env.VRC_APIKEY
 // User Agent for the VRChat API, otherwise Cloudflare will block you
 const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
 
@@ -66,7 +66,7 @@ const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
 const configuration: vrchat.Configuration = new vrchat.Configuration({
     username: env.VRC_USERNAME,
     password: env.VRC_PASSWORD,
-    apiKey: API_KEY,
+    apiKey: VRC,
     baseOptions: {
         headers: {
             "User-Agent": USER_AGENT
@@ -172,16 +172,12 @@ function setAuthCookie(authCookie?: string): void {
         jar.setCookie(
             new Cookie({key: 'auth', value: authCookie}),
             'https://api.vrchat.cloud'
-        ).then(() => {
-            logger.debug("AuthCookie set")
-        });
+        );
     }
     jar.setCookie(
         new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
         'https://api.vrchat.cloud'
-    ).then(() => {
-        logger.debug("APIKey set")
-    });
+    );
     fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
     logger.success("Cookies file saved")
 }
@@ -233,8 +229,9 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     try {
         const resp: AxiosResponse<vrchat.User> = await UsersApi.getUser(userId)
         return resp.data;
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
+        console.log(e.response?.data)
     }
 }
 
@@ -306,6 +303,9 @@ async function getAuthCookie(): Promise<string> {
         } else {
             throw new Error("No auth cookie found, please login first");
         }
+    }).catch((e) => {
+        logger.warn("There was a error while reading the cookie file: ");
+        logger.error(e);
     });
 }
 

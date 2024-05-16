@@ -20,7 +20,7 @@ import * as vrchat from "vrchat";
 import { env } from "bun";
 
 // Default VRChat API Key, been known for a while
-const API_KEY: string = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
+const VRC: string | undefined = env.VRC_APIKEY
 
 // User Agent for the VRChat API, otherwise Cloudflare will block you
 const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
@@ -29,7 +29,7 @@ const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
 const configuration: vrchat.Configuration = new vrchat.Configuration({
     username: env.VRC_USERNAME,
     password: env.VRC_PASSWORD,
-    apiKey: API_KEY,
+    apiKey: VRC,
     baseOptions: {
         headers: {
             "User-Agent": USER_AGENT
