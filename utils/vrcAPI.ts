@@ -55,7 +55,7 @@ finally
     axios.defaults.withCredentials = true;
 }
 
-console.log("[*] Initializing, login data");
+logger.info("Creating VRC Login vars and client");
 
 // Default VRChat API Key, been known for a while
 const API_KEY: string = "JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26";
@@ -80,6 +80,9 @@ const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
 const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
 const NotificationsApi: vrchat.NotificationsApi = new vrchat.NotificationsApi(configuration);
 
+
+logger.success("VRC API is configured")
+
 // Login function, this will get technical, so bear with me
 /*
 When you log in, you will get a response from the API, which will ask for the 2FA (TOTP/OTP),
@@ -96,6 +99,7 @@ For Auto-Login, you can save the cookie jar in a file, and load it in the Axios 
 (See the function 'setAuthCookie')
 */
 async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Promise<vrchat.CurrentUser | undefined>{
+    logger.working("Executing VRChat login...")
     try {
         const resp: AxiosResponse<vrchat.CurrentUser> = await AuthenticationApi.getCurrentUser();
         const currentUser: vrchat.CurrentUser = resp.data;
@@ -104,7 +108,7 @@ async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Prom
             return;
         }
         if(forceLogin) {
-            logger.info("[*] Forcing 2FA Login and save cookies")
+            logger.info("Forcing 2FA Login and save cookies")
             deleteCookieFile();
             const twoFactorCode: string | null = prompt("[*] Please enter your two factor code: ")?.toString() ?? "";
             const verifyResp: AxiosResponse<vrchat.Verify2FAResult> = await AuthenticationApi.verify2FA({ code: twoFactorCode });
