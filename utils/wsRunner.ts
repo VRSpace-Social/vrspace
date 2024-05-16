@@ -1,13 +1,16 @@
 import type { User } from "vrchat";
-import { getAuthCookie, getUserInfo, loginAndSaveCookies } from "./vrcAPI";
+import { getAuthCookie, getUserInfo, loginAndSaveCookies, seeOnlineFriends } from "./vrcAPI";
 import WebSocket from "ws";
 import { LogManager } from './logger';
+import readline from 'node:readline';
 
 // Logger Stuff
 const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType);
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
+
+let isWSRunning: boolean = false;
 
 async function loginAndRun(): Promise<void> {
     return getAuthCookie().then(async (cookie) => {
@@ -32,8 +35,15 @@ async function runWS(cookies: string) {
     });
     socket.addEventListener('open', () => {
         logger.success("Connected to VRChat Websocket");
+        const rl = prompt("Do you want to see which friend is online?")
+        if(rl === "y" || rl === "Y") {
+            return seeOnlineFriends().then(async (res) => {
+                console.log(res);
+            })
+          }
     });
     socket.addEventListener("message", async (event) => {
+        isWSRunning = true;
         logger.info("Message from VRC WSS server! ");
 
         /*
@@ -116,6 +126,7 @@ async function runWS(cookies: string) {
 
     socket.addEventListener('close', () => {
         console.log('Server connection closed');
+        isWSRunning = false;
     });
 }
 

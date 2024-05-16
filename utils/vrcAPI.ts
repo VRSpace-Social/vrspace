@@ -303,10 +303,10 @@ async function getAuthCookie(): Promise<string> {
         } else {
             throw new Error("No auth cookie found, please login first");
         }
-    }).catch((e) => {
+    })/*.catch((e) => {
         logger.fatal("There was a error while reading the cookie file: ");
         logger.error(e);
-    });
+    })*/;
 }
 
 export 
