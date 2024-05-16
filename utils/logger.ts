@@ -109,6 +109,13 @@ export class LogManager {
         this.logToConsole(this.logLine('WARN', message));
     }
 
+    fatal(message: any): void {
+        let stream = this.openFile();
+        stream.write(this.logLine('FATAL', message));
+        this.closeFile(stream);
+        this.logToConsole(this.logLine('FATAL', message));
+    }
+
     log(message: any): void {
         let stream = this.openFile();
         stream.write(this.logLine('INFO', message));
