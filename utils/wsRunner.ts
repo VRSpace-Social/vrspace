@@ -1,7 +1,8 @@
 import type { User } from "vrchat";
-import { getAuthCookie, getUserInfo, loginAndSaveCookies } from "./vrcAPI";
+import { getAuthCookie, getUserInfo, loginAndSaveCookies, seeOnlineFriends } from "./vrcAPI";
 import WebSocket from "ws";
 import { LogManager } from './logger';
+import readline from 'node:readline';
 
 // Logger Stuff
 const debugType: string = 'error';
@@ -9,11 +10,13 @@ const logger: LogManager = new LogManager(debugType);
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
 
+let isWSRunning: boolean = false;
+
 async function loginAndRun(): Promise<void> {
     return getAuthCookie().then(async (cookie) => {
         return runWS(cookie);
     }).catch(async () => {
-        console.log("No authCookie found, creating cookie file and retrying to retrieve authCookie again for 10 times");
+        logger.warn("No authCookie found, creating cookie file and retrying to retrieve authCookie again for 10 times");
         let onlyWS = prompt("Do you want to only run the WS? (Y/N)");
         if(onlyWS === "Y" || onlyWS === "y") {
             await loginAndSaveCookies(true);
@@ -31,10 +34,17 @@ async function runWS(cookies: string) {
         }
     });
     socket.addEventListener('open', () => {
-        console.log("Connected to VRChat Websocket");
+        logger.success("Connected to VRChat Websocket");
+        const rl = prompt("Do you want to see which friend is online?")
+        if(rl === "y" || rl === "Y") {
+            return seeOnlineFriends().then(async (res) => {
+                console.log(res);
+            })
+          }
     });
     socket.addEventListener("message", async (event) => {
-        console.log("Message from VRC WSS server! ");
+        isWSRunning = true;
+        logger.info("Message from VRC WSS server! ");
 
         /*
            TODO:
@@ -58,9 +68,12 @@ async function runWS(cookies: string) {
             }
 
             case "friend-offline": {
-                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId);
+                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
+                    console.log("[!!] ERROR on"+JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
+                    return undefined;
+                });
                 if(friendData === undefined) {
-                    console.log("Friend is not found");
+                    logger.warn("Friend is not found");
                     break;
                 }
                 let friendUsername: string = friendData.displayName;
@@ -74,9 +87,12 @@ async function runWS(cookies: string) {
 
             case "friend-delete": {
                 logger.info(event.data.toString());
-                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId);
+                let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
+                    console.log("[!!] ERROR on"+JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
+                    return undefined;
+                });
                 if(friendData === undefined) {
-                    console.log("Friend is not found");
+                    logger.warn("Friend is not found");
                     break;
                 }
                 let friendUsername: string = friendData.displayName;
@@ -99,7 +115,7 @@ async function runWS(cookies: string) {
                     console.log("Unknown message type: " + JSON.parse(event.data.toString()).type);
                     logger.log(JSON.parse(JSON.parse(event.data.toString()).content));
                 } catch(e) {
-                    console.log("Error while trying to parse message: " + e)
+                    logger.error("Error while trying to parse message: " + e)
                     console.log(JSON.parse(event.data.toString()));
                 }
             }
@@ -110,13 +126,14 @@ async function runWS(cookies: string) {
 
     socket.addEventListener('close', () => {
         console.log('Server connection closed');
+        isWSRunning = false;
     });
 }
 
 loginAndRun().catch(e => {
-    console.log("Error while trying to connect to VRChat Websocket");
-    console.log(e);
+    logger.warn("Error while trying to connect to VRChat Websocket")
+    logger.error(e);
     return;
-}).then(() => console.log("Running WS.."));
+}).then(() => logger.working("Running WS.."));
 
 export { loginAndRun }

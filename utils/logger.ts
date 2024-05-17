@@ -43,10 +43,6 @@ export class LogManager {
         if (!fs.existsSync(this.logDir)) {
             fs.mkdirSync(this.logDir);
         }
-
-        if (this.debugType) {
-            console.log('[LOGGER] - Debugging logging enabled');
-        }
     }
 
     openFile(): fs.WriteStream {
@@ -69,14 +65,21 @@ export class LogManager {
         let stream = this.openFile();
         stream.write(this.logLine('INFO', message));
         this.closeFile(stream);
-        this.logToConsole(message);
+        this.logToConsole(this.logLine('INFO', message));
     }
 
     success(message: any): void {
         let stream = this.openFile();
         stream.write(this.logLine('✔︎', message));
         this.closeFile(stream);
-        this.logToConsole(message);
+        this.logToConsole(this.logLine('✔︎', message));
+    }
+
+    working(message: any): void {
+        let stream = this.openFile();
+        stream.write(this.logLine('WORKING', message));
+        this.closeFile(stream);
+        this.logToConsole(this.logLine('WORKING', message));
     }
 
     debug(message: any): void {
@@ -103,14 +106,21 @@ export class LogManager {
         let stream = this.openFile();
         stream.write(this.logLine('WARN', message));
         this.closeFile(stream);
-        this.logToConsole("[WARN] - " + message);
+        this.logToConsole(this.logLine('WARN', message));
+    }
+
+    fatal(message: any): void {
+        let stream = this.openFile();
+        stream.write(this.logLine('FATAL', message));
+        this.closeFile(stream);
+        this.logToConsole(this.logLine('FATAL', message));
     }
 
     log(message: any): void {
         let stream = this.openFile();
         stream.write(this.logLine('INFO', message));
         this.closeFile(stream);
-        this.logToConsole(message);
+        this.logToConsole(this.logLine('INFO', message));
     }
 
     logToConsole(message: any): void {
