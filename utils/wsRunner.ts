@@ -1,8 +1,7 @@
 import type { User } from "vrchat";
-import { getAuthCookie, getUserInfo, loginAndSaveCookies, seeOnlineFriends } from "./vrcAPI";
+import { getAuthCookie, getUserInfo, loginAndSaveCookies, seeOnlineFriends, getInstanceInfo } from "./vrcAPI";
 import WebSocket from "ws";
 import { LogManager } from './logger';
-import readline from 'node:readline';
 
 // Logger Stuff
 const debugType: string = 'error';
@@ -11,6 +10,8 @@ const logger: LogManager = new LogManager(debugType);
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
 
 let isWSRunning: boolean = false;
+let wsStoppedCount: number = 0;
+let lastError: string = "";
 
 async function loginAndRun(): Promise<void> {
     return getAuthCookie().then(async (cookie) => {
@@ -35,17 +36,15 @@ async function runWS(cookies: string) {
     });
     socket.addEventListener('open', () => {
         logger.success("Connected to VRChat Websocket");
-        const rl = prompt("Do you want to see which friend is online?")
-        if(rl === "y" || rl === "Y") {
-            return seeOnlineFriends().then(async (res) => {
-                console.log(res);
-            })
-          }
+        isWSRunning = true;
     });
     socket.addEventListener("message", async (event) => {
-        isWSRunning = true;
+        if(JSON.parse(event.data.toString()).err) {
+            logger.fatal("Sorry, but it seems like that you're trying to connect to the server with invalid tokens.");
+            process.exit(1);
+        }
         logger.info("Message from VRC WSS server! ");
-
+        
         /*
            TODO:
            Types to still implement:
@@ -110,6 +109,22 @@ async function runWS(cookies: string) {
                 break;
             }
 
+            case "friend-location" : {
+                let jsonData = JSON.parse(JSON.parse(event.data.toString()).content);
+                if(jsonData.location === "traveling" && jsonData.travelingToLocation !== "" && jsonData.worldId.substring(0,5) === "wrld_") {
+                    let worldId: string = jsonData.worldId;
+                    let instanceId: string = jsonData.travelingToLocation.split(":")[1];;
+                    let instanceData = await getInstanceInfo(worldId, instanceId).catch(e => {
+                        logger.error("Error while trying to get instance data: " + e);
+                        return undefined;
+                    });
+                    logger.log("User ("+jsonData.user.displayName+") is traveling to a ("+jsonData.type+") instance (" + instanceData?.location + ") in " + instanceData?.world.name);
+                } else if(jsonData.location === "private" && jsonData.worldId === "private" && jsonData.travelingToLocation === "private") {
+                    logger.log("User ("+jsonData.user.displayName+") is in a private instance (probably in a private world or in a private instance of a public world)");
+                }
+                break;
+            }
+
             default: {
                 try{
                     console.log("Unknown message type: " + JSON.parse(event.data.toString()).type);
@@ -117,6 +132,8 @@ async function runWS(cookies: string) {
                 } catch(e) {
                     logger.error("Error while trying to parse message: " + e)
                     console.log(JSON.parse(event.data.toString()));
+                    lastError = JSON.parse(event.data.toString()).err;
+                    
                 }
             }
 
@@ -126,7 +143,9 @@ async function runWS(cookies: string) {
 
     socket.addEventListener('close', () => {
         console.log('Server connection closed');
+        logger.warn("Last logger error: \n" + lastError)
         isWSRunning = false;
+        wsStoppedCount++;
     });
 }
 
@@ -135,5 +154,23 @@ loginAndRun().catch(e => {
     logger.error(e);
     return;
 }).then(() => logger.working("Running WS.."));
+
+
+// if wsRunning is false, then we will try to login again
+setInterval(() => {
+    if(!isWSRunning) {
+        if(wsStoppedCount < 10) {
+            loginAndRun().catch(e => {
+                logger.warn("Error while trying to connect to VRChat Websocket")
+                logger.error(e);
+                return;
+            }).then(() => logger.working("Running WS.."));
+        }
+        else {
+            logger.fatal("WS has crashed 10 times, exiting..")
+            process.exit(1);
+        }  
+    }
+}, 10000);
 
 export { loginAndRun }

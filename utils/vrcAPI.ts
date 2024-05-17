@@ -79,7 +79,7 @@ const AuthenticationApi: vrchat.AuthenticationApi = new vrchat.AuthenticationApi
 const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
 const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
 const NotificationsApi: vrchat.NotificationsApi = new vrchat.NotificationsApi(configuration);
-
+const InstancesApi: vrchat.InstancesApi = new vrchat.InstancesApi(configuration);
 
 logger.success("VRC API is configured")
 
@@ -309,6 +309,19 @@ async function getAuthCookie(): Promise<string> {
     })*/;
 }
 
+
+async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance | undefined> {
+    try {
+        const resp = await InstancesApi.getInstance(worldId, instanceId);
+        return resp.data;
+    } catch (e: any) {
+        logger.fatal("Error while trying to get instance data: ");
+        //console.error(e);
+        console.log(e.response)
+    }
+    
+}
+
 export 
 {
     getAuthCookie,
@@ -318,5 +331,6 @@ export
     seeOnlineFriends,
     doLogout,
     doLogin,
-    loginAndSaveCookies
+    loginAndSaveCookies,
+    getInstanceInfo
 }

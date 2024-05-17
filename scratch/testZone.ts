@@ -1,4 +1,4 @@
-import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends } from '../utils/vrcAPI.ts';
+import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo } from '../utils/vrcAPI.ts';
 
 async function manualLoginLogout()
 {
@@ -18,4 +18,10 @@ if(debugRun)
     });
 else
     console.log("[!] DEBUG_RUN is not set to true");
+    let instanceId = "wrld_4cad78d6-0747-44ac-953f-43191fb53f28:47921".split(":")[1];
+    const instanceData = await getInstanceInfo("wrld_4cad78d6-0747-44ac-953f-43191fb53f28", instanceId).catch(e => {
+        console.log(e);
+        console.log(e.response)
+    });
+    console.log(instanceData);
 // Here do whatever you want with the functions imported from vrcAPI.ts
