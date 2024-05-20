@@ -24,12 +24,12 @@ TODO - Write instrucitons
 
 
 - GENERAL
-    - [ ] 👋 Login through VRChat account
-        - [ ] 📱 Two-factor authentication
-        - [ ] 🔐 Authentication cookie
+    - [x] 👋 Login through VRChat account
+        - [x] 📱 Two-factor authentication
+        - [x] 🔐 Authentication cookie
     - [ ] 📝 Create and manage your own profile
     - [ ] 📚 Browse and search for other user
-    - [ ] 📰 Real time status updates (RPC-esque)
+    - [x] 📰 Real time status updates (RPC-esque)
     - [ ] 📬 Real time notifications
        - [ ] 🚀 Push notifications
        - [ ] 📩 (ON DESKTOP CLIENT) Discord RPC
@@ -50,3 +50,12 @@ We welcome contributions from the community! If you'd like to contribute to VRSp
 
 ## License
 VRSpace.social, its source code and all other related materials are released under the [MIT License](LICENSE).
+
+## Legal
+VRSpace.social IS NOT responsible for any damage/malicious use made through the use of its source code.
+
+VRSpace.social is not sponsored by, affiliated with or endorsed by Unity Technologies, VRChat Inc. or its affiliates.
+
+"Unity" is a trademark or a registered trademark of Unity Technologies or its affiliates in the U.S. and elsewhere.
+
+"VRChat Inc." is a trademark or a registered trademark of VRChat Inc. Corporation or its affiliates in the U.S. and elsewhere.

@@ -4,7 +4,7 @@ import * as util from 'util';
 import { format } from 'date-fns';
 
 let dateNow: Date = new Date();
-let dateStamp: string = format(dateNow, "yyyy-MM-dd hh-mm-ss");
+let dateStamp: string = format(dateNow, "yyyy-MM-dd H-mm-ss");
 
 export class LogManager {
     logger: any;
@@ -12,13 +12,17 @@ export class LogManager {
     logDir: string;
     logFilePath: string;
     logFileName: string;
+    logApp: string
 
-    constructor(debugType: string) {
+    constructor(debugType: string, logApp?: string) {
         this.logger = null;
         this.debugType = debugType;
         this.logDir = '';
         this.logFilePath = '';
-        this.logFileName = util.format('%s.log', dateStamp);
+        if(!logApp) 
+            logApp = 'VRSPACE';
+        this.logApp = logApp;
+        this.logFileName = util.format('%s_%s.log', logApp, dateStamp);
         this.checkLogDirectory();
     }
 
@@ -57,8 +61,11 @@ export class LogManager {
 
     logLine(level: string, message: any): string {
         let dateNow: Date = new Date();
-        let dateLOG: string = format(dateNow, 'dd/MM/yyyy hh:mm:ss:SSS');
-        return util.format('[%s] - [%s] - %s\n', dateLOG, level, typeof message === 'object' ? JSON.stringify(message) : message);
+        let dateLOG: string = format(dateNow, 'dd/MM/yyyy H:mm:ss:SSS');
+        let appName = this.logApp;
+        if(appName === 'VRSPACE')
+            appName = 'MAIN'
+        return util.format('[%s] - [%s] - [%s] - %s\n', dateLOG, appName, level, typeof message === 'object' ? JSON.stringify(message) : message);
     }
 
     info(message: any): void {
@@ -87,7 +94,7 @@ export class LogManager {
             let stream = this.openFile();
             stream.write(this.logLine('DEBUG', message));
             this.closeFile(stream);
-            this.logToConsole("[!] DEBUG [!] - " + message);
+            this.logToConsole(this.logLine('DEBUG', message));
         }
     }
 
@@ -121,6 +128,12 @@ export class LogManager {
         stream.write(this.logLine('INFO', message));
         this.closeFile(stream);
         this.logToConsole(this.logLine('INFO', message));
+    }
+
+    write(message: any): void {
+        let stream = this.openFile();
+        stream.write(this.logLine('INFO', message));
+        this.closeFile(stream);
     }
 
     logToConsole(message: any): void {

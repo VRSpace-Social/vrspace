@@ -6,6 +6,15 @@ import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
 
+
+export interface VRSpaceVRCUserAvatar {
+    fileId: string;
+    ownerId: string;
+    avatarName: string;
+    avatarImageUrl: string;
+    vrcData: AxiosResponse;
+}
+
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
     interface AxiosRequestConfig {
@@ -18,7 +27,7 @@ let cookies: string;
 
 // Logger Stuff
 const debugType: string = 'error';
-const logger: LogManager = new LogManager(debugType);
+const logger: LogManager = new LogManager(debugType, 'API');
 
 if(await Bun.file('./.env').exists()) {
     if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
@@ -80,6 +89,7 @@ const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
 const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
 const NotificationsApi: vrchat.NotificationsApi = new vrchat.NotificationsApi(configuration);
 const InstancesApi: vrchat.InstancesApi = new vrchat.InstancesApi(configuration);
+const AvatarApi: vrchat.AvatarsApi = new vrchat.AvatarsApi(configuration);
 
 logger.success("VRC API is configured")
 
@@ -128,6 +138,8 @@ async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Prom
                 setAuthCookie();
             }
         }
+        const myself = await getMyself();
+        logger.success("Welcome Back "+myself?.displayName+" to VRSpace!");
         return resp.data;
     } catch (e) {
         const errorResponse = e as any;
@@ -141,7 +153,7 @@ async function doLogin(forceLogin?: boolean, onlySaveAuthCookie?: boolean): Prom
                     break;
                 default:
                     console.log("[✘] Unknown error, please see the following for more information:");
-                    console.log(errorResponse);
+                    console.log(errorResponse.response.data);
                     break;
             }
         } else {
@@ -203,6 +215,7 @@ function deleteCookieFile(): void {
  * @returns {Promise<vrchat.LimitedUser[] | undefined>} A promise that resolves to an array of online friends. If an error occurs, the promise will resolve to undefined.
  */
 async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined> {
+    logger.write("Getting online friends")
     try {
         const resp: AxiosResponse<vrchat.LimitedUser[]> = await FriendsApi.getFriends();
         return resp.data;
@@ -226,6 +239,7 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined> {
  * @returns {Promise<vrchat.User | undefined>} - A Promise that resolves with the user information if found, otherwise undefined.
  */
 async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
+    logger.write("Getting user info for: "+userId)
     try {
         const resp: AxiosResponse<vrchat.User> = await UsersApi.getUser(userId)
         return resp.data;
@@ -242,6 +256,7 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
  * @return {Promise<vrchat.LimitedUser[] | undefined>} - A promise that resolves with an array of LimitedUser objects if the search is successful, or undefined if the search fails.
  */
 async function searchUser(username: string): Promise<vrchat.LimitedUser[] | undefined>{
+    logger.write("Searching for user: "+username)
     try {
         const resp: AxiosResponse<vrchat.LimitedUser[]> = await UsersApi.searchUsers(username)
         if(resp)
@@ -311,6 +326,7 @@ async function getAuthCookie(): Promise<string> {
 
 
 async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance | undefined> {
+    logger.write("Getting instance data for: "+worldId+" - "+instanceId)
     try {
         const resp = await InstancesApi.getInstance(worldId, instanceId);
         return resp.data;
@@ -320,6 +336,53 @@ async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrc
         console.log(e.response)
     }
     
+}
+
+async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Promise<AxiosResponse | undefined | VRSpaceVRCUserAvatar> {
+    logger.write("Getting avatar data for: "+userId)
+    const userData = await getUserInfo(userId).catch(e => {
+        console.log(e);
+        console.log(e.response)
+    });
+    const avatarPictureUrl = userData?.currentAvatarImageUrl;
+    let avatarFileUrl = ""
+    for(let i = 1; i <= 6 ; i++) {
+            if(avatarPictureUrl?.split("/")[i] !== "")
+                avatarFileUrl += avatarPictureUrl?.split("/")[i] + "/";
+    }
+    avatarFileUrl = "https://"+avatarFileUrl;
+    const res = await axios.get(avatarFileUrl, {
+        headers: {
+            'User-Agent': USER_AGENT
+        },
+    }).catch(e => {
+        return undefined;
+    });
+    if (!getOnlyAvatarName) {
+        return res?.data;
+    } else {
+        let avatarName = res?.data.name;
+        avatarName = avatarName.split("Avatar - ")[1].split(" - Image - ")[0];
+        let avatarRes: VRSpaceVRCUserAvatar = {
+            fileId: res?.data.id,
+            ownerId: res?.data.ownerId,
+            avatarName: avatarName,
+            avatarImageUrl: avatarFileUrl,
+            vrcData: res?.data
+        }
+        return avatarRes;
+    }
+}
+
+
+async function getMyself(): Promise<vrchat.CurrentUser | undefined> {
+    logger.write("Getting current user info")
+    try {
+        const resp = await AuthenticationApi.getCurrentUser();
+        return resp.data;
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 export 
@@ -332,5 +395,7 @@ export
     doLogout,
     doLogin,
     loginAndSaveCookies,
-    getInstanceInfo
+    getInstanceInfo,
+    findUserAvatar,
+    getMyself
 }
