@@ -1,21 +1,15 @@
 import { Elysia } from "elysia";
+import { getOnlineFriends } from "../utils/apiHelper";
 
 export const routes = new Elysia()
 
-    .get("/api/users", ({set}) => {
+    .get("/api/getOnlineFriends", ({set}) => {
         set.headers['x-powered-by'] = 'Elysia'
-        set.headers['set-cookie'] = "dio=cane"
-        return [
-            {
-                name: "John Doe",
-                email: "johndoe@example.com",
-                age: 25
-            },
-            {
-                name: "Erik Doe",
-                email: "jane@example.com",
-                age: 22
-            }
-        ];
+        let friendData = getOnlineFriends();
+        return friendData;
     })
     .all('/lmao', () => 'hi')
+    .get('/vrc', () => {
+        let webPage = Bun.file('./web/index.html');
+        return webPage;
+    })

@@ -5,15 +5,7 @@ import * as fs from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
-
-
-export interface VRSpaceVRCUserAvatar {
-    fileId: string;
-    ownerId: string;
-    avatarName: string;
-    avatarImageUrl: string;
-    vrcData: AxiosResponse;
-}
+import type { VRSpaceVRCUserAvatar } from "../interfaces/apiHelper";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {

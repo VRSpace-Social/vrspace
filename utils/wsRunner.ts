@@ -121,7 +121,7 @@ async function runWS(cookies: string) {
                 if (location === "traveling" && travelingToLocation !== "" && jsonData.worldId.substring(0, 5) === "wrld_") {
                     // User IS TRAVELING to instance
                     let worldId: string = jsonData.worldId;
-                    let instanceId: string = jsonData.travelingToLocation.split(":")[1];;
+                    let instanceId: string = jsonData.travelingToLocation.split(":")[1];
                     let instanceData = await getInstanceInfo(worldId, instanceId).catch(e => {
                         logger.error("Error while trying to get instance data: " + e);
                         return undefined;

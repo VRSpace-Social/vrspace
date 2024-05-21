@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Friends</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #2e2e2e;
+      color: white;
+    }
+    .friend-card {
+      background-color: #3b3b3b;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .friend-card img {
+      width: 100%;
+      height: auto;
+    }
+    .friend-card .card-body {
+      padding: 10px;
+    }
+    .search-bar {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Logo</a>
+  <form class="form-inline search-bar">
+    <input class="form-control mr-sm-2" type="search" placeholder="Search for friends..." aria-label="Search">
+  </form>
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="#"><i class="fas fa-bell"></i></a>
+    <a class="nav-item nav-link" href="#"><i class="fas fa-user-circle"></i></a>
+  </div>
+</nav>
+
+<div class="container mt-5">
+  <h2>Online Friends:</h2>
+  <div class="row" id="friends-list">
+    <!-- Friend cards will be injected here -->
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://kit.fontawesome.com/9071d6386d.js" crossorigin="anonymous"></script>
+<script>
+    // Sample JSON response from middleware
+    const friendsData = async () => {
+      const response = await fetch('http://localhost:3000/api/getOnlineFriends');
+      const data = await response.json();
+      return data;
+    };
+
+    $(document).ready(function() {
+    const friendsList = $('#friends-list');
+    friendsData().then(friendsData => {
+        for(let i = 0; i < friendsData.length; i++) {
+            const friendCard = `
+        <div class="col-md-4 mb-4">
+          <div class="card friend-card">
+            <img src="${friendsData[i].worldImageUrl}" class="card-img-top" alt="${friendsData[i].worldName}">
+            <div class="card-body">
+              <h5 class="card-title">${friendsData[i].username} is playing</h5>
+              <i class="fa-solid fa-earth-americas"></i> ${friendsData[i].worldName}
+              <p class="card-text">
+                <small>Players: ${friendsData[i].players}/${friendsData[i].maxPlayers}</small>
+                <br>
+                <small>${friendsData[i].instanceType}</small>
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+      friendsList.append(friendCard);
+        }
+    });
+  });
+</script>
+
+</body>
+</html>
