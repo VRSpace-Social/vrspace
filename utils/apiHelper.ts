@@ -10,8 +10,7 @@ const instaceType = {
     "group": "Group"
 };
 
-async function getOnlineFriends()
-{
+async function getOnlineFriends() {
     const friendsDataToSend: FriendOnlineData[] = [];
     let friends: LimitedUser[] | undefined = await seeOnlineFriends();
     if (friends) {
@@ -19,9 +18,9 @@ async function getOnlineFriends()
         // Rest of the code
         for (let friend of friends) {
             console.log(friend.location + " | " + friend.displayName + " | " + friend.status)
-            if(friend.location?.substring(0, 5) === "wrld_") {
+            if (friend.location?.substring(0, 5) === "wrld_") {
                 let instanceData = await getInstanceInfo(friend.location.split(":")[0], friend.location.split(":")[1]);
-                if(instanceData) {
+                if (instanceData) {
                     friendsDataToSend.push({
                         worldImageUrl: instanceData.world.imageUrl,
                         username: friend.displayName,
@@ -29,12 +28,13 @@ async function getOnlineFriends()
                         instanceType: instaceType[instanceData.type] + " Instance",
                         players: instanceData.n_users,
                         maxPlayers: instanceData.capacity,
+                        instanceId: friend.location,
                     });
                 }
-            }
-            else if(friend.location === "offline" && friend.status === "active") {
-                // Friends are offline in-game but active or API/Website
-                friendsDataToSend.push({
+            } else {
+                let userData = await getUserInfo(friend.id);
+                if (userData?.state === "active") {
+                    friendsDataToSend.push({
                         worldImageUrl: null,
                         worldName: "",
                         username: friend.displayName,
@@ -42,9 +42,8 @@ async function getOnlineFriends()
                         players: 0,
                         maxPlayers: 0,
                     });
-            }
-            else if(friend.location === "private") {
-                friendsDataToSend.push({
+                } else if (friend.location === "private") {
+                    friendsDataToSend.push({
                         worldImageUrl: null,
                         username: friend.displayName,
                         worldName: "Private World",
@@ -52,8 +51,9 @@ async function getOnlineFriends()
                         players: 0,
                         maxPlayers: 0,
                     });
+                }
+
             }
-            
         }
         console.log("Done getting online friends data");
     }
