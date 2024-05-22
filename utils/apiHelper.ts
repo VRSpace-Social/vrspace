@@ -15,8 +15,10 @@ async function getOnlineFriends()
     const friendsDataToSend: FriendOnlineData[] = [];
     let friends: LimitedUser[] | undefined = await seeOnlineFriends();
     if (friends) {
+        console.log("location | displayName | status")
         // Rest of the code
         for (let friend of friends) {
+            console.log(friend.location + " | " + friend.displayName + " | " + friend.status)
             if(friend.location?.substring(0, 5) === "wrld_") {
                 let instanceData = await getInstanceInfo(friend.location.split(":")[0], friend.location.split(":")[1]);
                 if(instanceData) {
@@ -30,6 +32,28 @@ async function getOnlineFriends()
                     });
                 }
             }
+            else if(friend.location === "offline" && friend.status === "active") {
+                // Friends are offline in-game but active or API/Website
+                friendsDataToSend.push({
+                        worldImageUrl: null,
+                        worldName: "",
+                        username: friend.displayName,
+                        instanceType: "Is online on VRChat Website/API",
+                        players: 0,
+                        maxPlayers: 0,
+                    });
+            }
+            else if(friend.location === "private") {
+                friendsDataToSend.push({
+                        worldImageUrl: null,
+                        username: friend.displayName,
+                        worldName: "Private World",
+                        instanceType: "Private Instance",
+                        players: 0,
+                        maxPlayers: 0,
+                    });
+            }
+            
         }
         console.log("Done getting online friends data");
     }

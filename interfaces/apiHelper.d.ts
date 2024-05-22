@@ -1,6 +1,6 @@
 export interface FriendOnlineData {
     username: string,
-    worldName: string,
+    worldName?: string,
     worldId?: string,
     instanceId?: string
     instanceType: string
