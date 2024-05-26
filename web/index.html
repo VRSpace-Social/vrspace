@@ -49,7 +49,7 @@
   <nav class="navbar navbar-dark bg-dark">
     <a class="navbar-brand" href="#">Logo</a>
     <form class="form-inline search-bar">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search for friends..." aria-label="Search">
+      <input id="search-input" class="form-control mr-sm-2" type="search" placeholder="Search for friends..." aria-label="Search">
     </form>
     <div class="navbar-nav">
       <a class="nav-item nav-link" href="#"><i class="fas fa-bell"></i></a>
@@ -98,8 +98,14 @@
       return data;
     };
 
-    $(document).ready(function () {
-      const spinner = $('#spinner');
+    const searchFriends = async (query) => {
+      const response = await fetch(`http://localhost:3000/api/searchFriends?query=${query}`);
+      console.log(response);
+      const data = await response.json();
+      return data;
+    };
+
+    const displayFriends = (friendsData) => {
       const onlineFriendsList = $('#online-friends-list');
       const privateFriendsList = $('#private-friends-list');
       const websiteFriendsList = $('#website-friends-list');
@@ -107,75 +113,103 @@
       const privateWorldsSection = $('#private-worlds');
       const websiteActiveSection = $('#website-active');
 
+      if (friendsData.length > 0) {
+        onlineFriendsSection.show();
+        privateWorldsSection.show();
+        websiteActiveSection.show();
+      }
+
+      for (let i = 0; i < friendsData.length; i++) {
+        const friend = friendsData[i];
+
+        if (friend.instanceType === 'Private Instance') {
+          let friendCard = `
+          <div class="col-md-4">
+            <div class="card friend-card">
+              <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
+              <div class="card-body">
+                <h5 class="card-title">${friend.username} is playing</h5>
+                <i class="fa-solid fa-earth-americas"></i> ${friend.worldName}
+                <p class="card-text">
+                  <small>Players: ${friend.players}/${friend.maxPlayers}</small>
+                  <br>
+                  <small>${friend.instanceType}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+          privateFriendsList.append(friendCard);
+        } else if (friend.instanceType === 'Is online on VRChat Website/API') {
+          let friendCard = `
+          <div class="col-md-4">
+            <div class="card friend-card">
+              <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
+              <div class="card-body">
+                <h5 class="card-title">${friend.username} is playing</h5>
+                <i class="fa-solid fa-earth-americas"></i> ${friend.worldName}
+                <p class="card-text">
+                  <small>Players: ${friend.players}/${friend.maxPlayers}</small>
+                  <br>
+                  <small>${friend.instanceType}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+          websiteFriendsList.append(friendCard);
+        } else {
+          let worldId = (friend.instanceId).split(':')[0];
+          let instanceId = (friend.instanceId).split(':')[1];
+          let vrcInstanceUrl = `vrchat://launch?ref=vrchat.com&id=${friend.instanceId}`;
+          let friendCard = `
+          <div class="col-md-4">
+            <div class="card friend-card">
+              <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
+              <div class="card-body">
+                <h5 class="card-title">${friend.username} is playing</h5>
+                <a href="${vrcInstanceUrl}"><i class="fa-solid fa-earth-americas"></i> ${friend.worldName}</a>
+                <p class="card-text">
+                  <small>Players: ${friend.players}/${friend.maxPlayers}</small>
+                  <br>
+                  <small>${friend.instanceType}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+          onlineFriendsList.append(friendCard);
+        }
+      }
+    };
+
+    $(document).ready(function () {
+      const spinner = $('#spinner');
+      const onlineFriendsList = $('#online-friends-list');
+      const privateFriendsList = $('#private-friends-list');
+      const websiteFriendsList = $('#website-friends-list');
+
       friendsData().then(friendsData => {
         spinner.hide();
-        if (friendsData.length > 0) {
-          onlineFriendsSection.show();
-          privateWorldsSection.show();
-          websiteActiveSection.show();
-        }
+        displayFriends(friendsData);
+      });
 
-        for (let i = 0; i < friendsData.length; i++) {
-          const friend = friendsData[i];
-
-          if (friend.instanceType === 'Private Instance') {
-            let friendCard = `
-            <div class="col-md-4">
-              <div class="card friend-card">
-                <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
-                <div class="card-body">
-                  <h5 class="card-title">${friend.username} is playing</h5>
-                  <i class="fa-solid fa-earth-americas"></i> ${friend.worldName}
-                  <p class="card-text">
-                    <small>Players: ${friend.players}/${friend.maxPlayers}</small>
-                    <br>
-                    <small>${friend.instanceType}</small>
-                  </p>
-                </div>
-              </div>
-            </div>
-          `;
-            privateFriendsList.append(friendCard);
-          } else if (friend.instanceType === 'Is online on VRChat Website/API') {
-            let friendCard = `
-            <div class="col-md-4">
-              <div class="card friend-card">
-                <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
-                <div class="card-body">
-                  <h5 class="card-title">${friend.username} is playing</h5>
-                  <i class="fa-solid fa-earth-americas"></i> ${friend.worldName}
-                  <p class="card-text">
-                    <small>Players: ${friend.players}/${friend.maxPlayers}</small>
-                    <br>
-                    <small>${friend.instanceType}</small>
-                  </p>
-                </div>
-              </div>
-            </div>
-          `;
-            websiteFriendsList.append(friendCard);
-          } else {
-            let worldId = (friend.instanceId).split(':')[0];
-            let instanceId = (friend.instanceId).split(':')[1];
-            let vrcInstanceUrl = `vrchat://launch?ref=vrchat.com&id=${friend.instanceId}`;
-            let friendCard = `
-            <div class="col-md-4">
-              <div class="card friend-card">
-                <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
-                <div class="card-body">
-                  <h5 class="card-title">${friend.username} is playing</h5>
-                  <a href="${vrcInstanceUrl}"><i class="fa-solid fa-earth-americas"></i> ${friend.worldName}</a>
-                  <p class="card-text">
-                    <small>Players: ${friend.players}/${friend.maxPlayers}</small>
-                    <br>
-                    <small>${friend.instanceType}</small>
-                  </p>
-                </div>
-              </div>
-            </div>
-          `;
-            onlineFriendsList.append(friendCard);
-          }
+      $('#search-input').on('input', function () {
+        const query = $(this).val();
+        if (query.length > 0) {
+          searchFriends(query).then(searchResults => {
+            onlineFriendsList.empty();
+            privateFriendsList.empty();
+            websiteFriendsList.empty();
+            displayFriends(searchResults);
+          });
+        } else {
+          onlineFriendsList.empty();
+          privateFriendsList.empty();
+          websiteFriendsList.empty();
+          friendsData().then(friendsData => {
+            displayFriends(friendsData);
+          });
         }
       });
     });

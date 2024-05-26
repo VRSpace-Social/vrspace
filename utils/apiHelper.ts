@@ -1,5 +1,5 @@
 import type { LimitedUser } from "vrchat";
-import { seeOnlineFriends, getInstanceInfo, getUserInfo } from "./vrcAPI";
+import { seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI";
 import type { FriendOnlineData } from "../interfaces/apiHelper";
 
 const instaceType = {
@@ -17,7 +17,6 @@ async function getOnlineFriends() {
         console.log("location | displayName | status")
         // Rest of the code
         for (let friend of friends) {
-            console.log(friend.location + " | " + friend.displayName + " | " + friend.status)
             if (friend.location?.substring(0, 5) === "wrld_") {
                 let instanceData = await getInstanceInfo(friend.location.split(":")[0], friend.location.split(":")[1]);
                 if (instanceData) {
@@ -61,4 +60,27 @@ async function getOnlineFriends() {
 }
 
 
-export { getOnlineFriends };
+async function searchUsers(query: string): Promise<FriendOnlineData[]> {
+    const friendsDataToSend: FriendOnlineData[] = [];
+    let users: LimitedUser[] | undefined = await searchUser(query);
+    if(users){
+        for (let user of users) {
+            if(user.isFriend === true){
+                friendsDataToSend.push({
+                    username: user.displayName,
+                    worldImageUrl: user.profilePicOverride? user.profilePicOverride:  user.currentAvatarImageUrl,
+                    instanceType: 'Private Instance',
+                    instanceId: 'private',
+                });
+            }
+        }
+        console.log(friendsDataToSend)
+        return friendsDataToSend;
+    } else {
+        return friendsDataToSend;
+
+    }
+}
+
+
+export { getOnlineFriends, searchUsers };

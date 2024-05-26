@@ -6,7 +6,7 @@ export interface FriendOnlineData {
     instanceType: string
     players?: number
     maxPlayers?: number
-    worldImageUrl: string | null
+    worldImageUrl: string | null | undefined
 }
 
 

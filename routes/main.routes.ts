@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { getOnlineFriends } from "../utils/apiHelper";
+import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
 
 export const routes = new Elysia()
 
@@ -7,6 +7,16 @@ export const routes = new Elysia()
         set.headers['x-powered-by'] = 'Elysia'
         let friendData = getOnlineFriends();
         return friendData;
+    })
+    .get("/api/searchFriends", ({set, query}) => {
+        set.headers['x-powered-by'] = 'Elysia'
+        if(query.query) {
+            let users = searchUsers(query.query);
+            return users;
+        } else {
+            return 'No query provided';
+        }
+        
     })
     .all('/lmao', () => 'hi')
     .get('/vrc', () => {
