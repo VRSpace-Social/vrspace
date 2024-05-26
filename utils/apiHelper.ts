@@ -61,6 +61,7 @@ async function getOnlineFriends() {
 
 
 async function searchUsers(query: string): Promise<FriendOnlineData[]> {
+    console.log("DOING API CALL...")
     const friendsDataToSend: FriendOnlineData[] = [];
     let users: LimitedUser[] | undefined = await searchUser(query);
     if(users){

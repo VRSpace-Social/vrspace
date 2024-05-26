@@ -19,7 +19,11 @@ export const routes = new Elysia()
         
     })
     .all('/lmao', () => 'hi')
-    .get('/vrc', () => {
+    .get('/vrc', ({query}) => {
         let webPage = Bun.file('./web/index.html');
+        if(query.query) {
+            let users = searchUsers(query.query);
+            return users;
+        }
         return webPage;
     })

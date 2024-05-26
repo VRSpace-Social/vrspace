@@ -194,7 +194,7 @@
         displayFriends(friendsData);
       });
 
-      $('#search-input').on('input', function () {
+      $('#search-input').on('change', function () {
         const query = $(this).val();
         if (query.length > 0) {
           searchFriends(query).then(searchResults => {
@@ -207,8 +207,10 @@
           onlineFriendsList.empty();
           privateFriendsList.empty();
           websiteFriendsList.empty();
+          spinner.show();
           friendsData().then(friendsData => {
             displayFriends(friendsData);
+            spinner.hide();
           });
         }
       });
