@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "bun index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "example": "bun scratch/testZone.ts"
+    "example": "bun scratch/testZone.ts",
+    "compile": "bun build ./index.ts --compile --outfile out/api"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

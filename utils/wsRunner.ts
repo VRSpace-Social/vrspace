@@ -6,7 +6,7 @@ import { argv } from "bun";
 
 // Logger Stuff
 const debugType: string = 'error';
-const logger: LogManager = new LogManager(debugType, 'WSS');
+const logger: LogManager = new LogManager(debugType, 'VRCHAT-WSS');
 
 const USER_AGENT: string = "VRSpaceWSClient/0.0.1 - dev@vrspace.social";
 
@@ -35,6 +35,7 @@ async function runWS(cookies: string) {
             "User-Agent": USER_AGENT
         }
     });
+    logger.debug("wss://pipeline.vrchat.cloud/?authToken=" + cookies);
     socket.addEventListener('open', () => {
         logger.success("Connected to VRChat Websocket");
         isWSRunning = true;

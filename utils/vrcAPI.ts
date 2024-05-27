@@ -19,7 +19,7 @@ let cookies: string;
 
 // Logger Stuff
 const debugType: string = 'error';
-const logger: LogManager = new LogManager(debugType, 'API');
+const logger: LogManager = new LogManager(debugType, 'VRCHAT-API');
 
 if(await Bun.file('./.env').exists()) {
     if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||

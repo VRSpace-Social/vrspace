@@ -77,9 +77,9 @@ export class LogManager {
 
     success(message: any): void {
         let stream = this.openFile();
-        stream.write(this.logLine('✔︎', message));
+        stream.write(this.logLine('SUCCESS', message));
         this.closeFile(stream);
-        this.logToConsole(this.logLine('✔︎', message));
+        this.logToConsole(this.logLine('SUCCESS', message));
     }
 
     working(message: any): void {

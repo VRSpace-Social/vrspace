@@ -1,6 +1,12 @@
 import type { LimitedUser } from "vrchat";
 import { seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI";
 import type { FriendOnlineData } from "../interfaces/apiHelper";
+import { LogManager } from "./logger";
+
+
+// Logger Stuff
+const debugType: string = 'error';
+const logger: LogManager = new LogManager(debugType, 'VRS-MIDDLEWARE');
 
 const instaceType = {
     "public": "Public",
@@ -11,10 +17,10 @@ const instaceType = {
 };
 
 async function getOnlineFriends() {
+    logger.working("Getting online friends data...");
     const friendsDataToSend: FriendOnlineData[] = [];
     let friends: LimitedUser[] | undefined = await seeOnlineFriends();
     if (friends) {
-        console.log("location | displayName | status")
         // Rest of the code
         for (let friend of friends) {
             if (friend.location?.substring(0, 5) === "wrld_") {
@@ -54,19 +60,21 @@ async function getOnlineFriends() {
 
             }
         }
-        console.log("Done getting online friends data");
+        logger.success("Online friends data has been fetched successfully");
     }
     return friendsDataToSend;
 }
 
 
 async function searchUsers(query: string): Promise<FriendOnlineData[]> {
-    console.log("DOING API CALL...")
+    logger.working("Searching for user: " + query + "...");
     const friendsDataToSend: FriendOnlineData[] = [];
     let users: LimitedUser[] | undefined = await searchUser(query);
     if(users){
+        logger.info("Found " + users.length + " users, filtering online friends...")
         for (let user of users) {
             if(user.isFriend === true){
+                logger.info("Found friend: " + user.displayName);
                 friendsDataToSend.push({
                     username: user.displayName,
                     worldImageUrl: user.profilePicOverride? user.profilePicOverride:  user.currentAvatarImageUrl,
@@ -75,11 +83,9 @@ async function searchUsers(query: string): Promise<FriendOnlineData[]> {
                 });
             }
         }
-        console.log(friendsDataToSend)
         return friendsDataToSend;
     } else {
         return friendsDataToSend;
-
     }
 }
 

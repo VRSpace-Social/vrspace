@@ -27,3 +27,7 @@ export const routes = new Elysia()
         }
         return webPage;
     })
+    .get('/vrc-wss.js', () => {
+        let webPage = Bun.file('./web/vrc-wss.js');
+        return webPage;
+    })
