@@ -65,7 +65,7 @@ export class LogManager {
         let appName = this.logApp;
         if(appName === 'VRSPACE')
             appName = 'MAIN'
-        return util.format('[%s] - [%s] - [%s] - %s\n', dateLOG, appName, level, typeof message === 'object' ? JSON.stringify(message) : message);
+        return util.format('[%s] - [%s] - [%s] - %s', dateLOG, appName, level, typeof message === 'object' ? JSON.stringify(message) : message);
     }
 
     info(message: any): void {

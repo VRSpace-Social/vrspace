@@ -1,11 +1,11 @@
 import * as vrchat from "vrchat";
-import { LogManager } from './logger';
-import { env } from "bun";
+import {LogManager} from './logger';
+import {env} from "bun";
 import * as fs from "fs";
+import type {AxiosResponse} from "axios";
 import axios from "axios";
-import { Cookie, CookieJar } from 'tough-cookie';
-import type { AxiosResponse } from "axios";
-import type { VRSpaceVRCUserAvatar } from "../interfaces/apiHelper";
+import {Cookie, CookieJar} from 'tough-cookie';
+import type {VRSpaceVRCUserAvatar} from "../interfaces/apiHelper";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -81,7 +81,6 @@ const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
 const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
 const NotificationsApi: vrchat.NotificationsApi = new vrchat.NotificationsApi(configuration);
 const InstancesApi: vrchat.InstancesApi = new vrchat.InstancesApi(configuration);
-const AvatarApi: vrchat.AvatarsApi = new vrchat.AvatarsApi(configuration);
 
 logger.success("VRC API is configured")
 
@@ -231,7 +230,7 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[] | undefined> {
  * @returns {Promise<vrchat.User | undefined>} - A Promise that resolves with the user information if found, otherwise undefined.
  */
 async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
-    logger.write("Getting user info for: "+userId)
+    logger.working("Getting user info for: "+userId)
     try {
         const resp: AxiosResponse<vrchat.User> = await UsersApi.getUser(userId)
         return resp.data;
@@ -347,7 +346,7 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
         headers: {
             'User-Agent': USER_AGENT
         },
-    }).catch(e => {
+    }).catch(() => {
         return undefined;
     });
     if (!getOnlyAvatarName) {
@@ -355,14 +354,13 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
     } else {
         let avatarName = res?.data.name;
         avatarName = avatarName.split("Avatar - ")[1].split(" - Image - ")[0];
-        let avatarRes: VRSpaceVRCUserAvatar = {
+        return {
             fileId: res?.data.id,
             ownerId: res?.data.ownerId,
             avatarName: avatarName,
             avatarImageUrl: avatarFileUrl,
             vrcData: res?.data
-        }
-        return avatarRes;
+        };
     }
 }
 
