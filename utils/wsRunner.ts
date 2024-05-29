@@ -19,12 +19,7 @@ async function loginAndRun(): Promise<void> {
         return runWS(cookie);
     }).catch(async () => {
         logger.warn("No authCookie found, creating cookie file and retrying to retrieve authCookie again for 10 times");
-        let onlyWS = prompt("Do you want to only run the WS? (Y/N)");
-        if (onlyWS === "Y" || onlyWS === "y") {
-            await loginAndSaveCookies(true);
-        } else {
-            await loginAndSaveCookies();
-        }
+        await loginAndSaveCookies();
         return loginAndRun();
     });
 }
@@ -77,10 +72,6 @@ async function runWS(cookies: string) {
                 let friendData: User | undefined = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
                     let errorResponse = JSON.parse(e.response?.data);
                     console.log(errorResponse);
-                    if (errorResponse.error.status === 401 && errorResponse.error.message === "\"Missing Credentials\"") {
-                        logger.fatal("twoFactorAuth is either missing or invalid.")
-                        process.exit(1);
-                    }
                     console.log("[!!] ERROR on" + JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
                     return undefined;
                 });

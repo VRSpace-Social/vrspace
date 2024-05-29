@@ -1,5 +1,5 @@
-import type { LimitedUser } from "vrchat";
-import { seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI";
+import type {LimitedUser} from "vrchat";
+import {getAuthCookie, seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI";
 import type { FriendOnlineData } from "../interfaces/apiHelper";
 import { LogManager } from "./logger";
 
@@ -8,7 +8,7 @@ import { LogManager } from "./logger";
 const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType, 'VRS-MIDDLEWARE');
 
-const instaceType = {
+const instanceType = {
     "public": "Public",
     "hidden": "Friends+",
     "friends": "Friends",
@@ -30,7 +30,7 @@ async function getOnlineFriends() {
                         worldImageUrl: instanceData.world.imageUrl,
                         username: friend.displayName,
                         worldName: instanceData.world.name,
-                        instanceType: instaceType[instanceData.type] + " Instance",
+                        instanceType: instanceType[instanceData.type] + " Instance",
                         players: instanceData.n_users,
                         maxPlayers: instanceData.capacity,
                         instanceId: friend.location,
@@ -51,7 +51,7 @@ async function getOnlineFriends() {
                     friendsDataToSend.push({
                         worldImageUrl: null,
                         username: friend.displayName,
-                        worldName: "Private World",
+                        worldName: "",
                         instanceType: "Private Instance",
                         players: 0,
                         maxPlayers: 0,
@@ -73,7 +73,7 @@ async function searchUsers(query: string): Promise<FriendOnlineData[]> {
     if(users){
         logger.info("Found " + users.length + " users, filtering online friends...")
         for (let user of users) {
-            if(user.isFriend === true){
+            if(user.isFriend){
                 logger.info("Found friend: " + user.displayName);
                 friendsDataToSend.push({
                     username: user.displayName,
