@@ -1,0 +1,3 @@
+[submodule "vrchatapi-javascript"]
+	path = vrchatapi-javascript
+	url = https://github.com/VRSpace-Social/vrchatapi-javascript
