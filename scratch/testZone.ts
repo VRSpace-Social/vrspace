@@ -1,4 +1,6 @@
-import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo, findUserAvatar } from '../utils/vrcAPI.ts';
+import { doLogin, doLogout, getAuthCookie, getNotifications,
+    getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo, findUserAvatar } from '../utils/vrcAPI.ts';
+import type {VRChatCookieFormat} from "../interfaces/apiHelper";
 
 async function manualLoginLogout()
 {
@@ -18,5 +20,8 @@ if(debugRun)
     });
 else
     console.log("[!] DEBUG_RUN is not set to true");
+    const res = await findUserAvatar('usr_ca92ff94-4841-4438-8546-7def70a94107')
+    console.log(res);
+
     
     

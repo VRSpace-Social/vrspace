@@ -17,3 +17,16 @@ export interface VRSpaceVRCUserAvatar {
     avatarImageUrl: string;
     vrcData: AxiosResponse;
 }
+
+export interface VRChatCookieFormat {
+    key: string;
+    value: string;
+    maxAge: number;
+    path: string;
+    expires: Date;
+    httpOnly: boolean;
+    sameSite: string;
+    domain?: string;
+    hostOnly?: boolean;
+    creation: Date;
+}
