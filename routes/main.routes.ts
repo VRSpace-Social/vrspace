@@ -1,21 +1,33 @@
 import { Elysia } from "elysia";
+import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
 
 export const routes = new Elysia()
 
-    .get("/api/users", ({set}) => {
+    .get("/api/getOnlineFriends", ({set}) => {
         set.headers['x-powered-by'] = 'Elysia'
-        set.headers['set-cookie'] = "dio=cane"
-        return [
-            {
-                name: "John Doe",
-                email: "johndoe@example.com",
-                age: 25
-            },
-            {
-                name: "Erik Doe",
-                email: "jane@example.com",
-                age: 22
-            }
-        ];
+        let friendData = getOnlineFriends();
+        return friendData;
+    })
+    .get("/api/searchFriends", ({set, query}) => {
+        set.headers['x-powered-by'] = 'Elysia'
+        if(query.query) {
+            let users = searchUsers(query.query);
+            return users;
+        } else {
+            return 'No query provided';
+        }
+        
     })
     .all('/lmao', () => 'hi')
+    .get('/vrc', ({query}) => {
+        let webPage = Bun.file('./web/index.html');
+        if(query.query) {
+            let users = searchUsers(query.query);
+            return users;
+        }
+        return webPage;
+    })
+    .get('/vrc-wss.js', () => {
+        let webPage = Bun.file('./web/vrc-wss.js');
+        return webPage;
+    })

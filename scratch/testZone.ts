@@ -1,4 +1,4 @@
-import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends } from '../utils/vrcAPI.ts';
+import { doLogin, doLogout, getAuthCookie, getNotifications, getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo, findUserAvatar } from '../utils/vrcAPI.ts';
 
 async function manualLoginLogout()
 {
@@ -18,4 +18,5 @@ if(debugRun)
     });
 else
     console.log("[!] DEBUG_RUN is not set to true");
-// Here do whatever you want with the functions imported from vrcAPI.ts
+    
+    

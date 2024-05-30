@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "bun index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "example": "bun scratch/testZone.ts"
+    "example": "bun scratch/testZone.ts",
+    "compile": "bun build ./index.ts --compile --outfile out/api"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -20,6 +21,7 @@
     "@elysiajs/static": "^1.0.3",
     "date-fns": "^3.6.0",
     "elysia": "^1.0.16",
+    "json-difference": "^1.16.1",
     "tough-cookie": "^4.1.4",
     "vrchat": "^1.17.3"
   },
@@ -40,6 +42,10 @@
     {
       "name": "laky64",
       "email": "laky@vrspace.social"
+    },
+    {
+      "name": "the_ferkk",
+      "email": "feder3x@protonmail.com"
     }
   ]
 }
