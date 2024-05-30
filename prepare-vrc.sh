@@ -14,4 +14,14 @@ cp ../vrc-npm/package-lock.json.mod package-lock.json
 npm install
 npm run prepare
 cd ..
-npm install /home/foisx/Documenti/Gits/vrspace/vrchatapi-javascript/
+npm install vrchatapi-javascript/
+
+echo "1st stage: VRChat NPM Module START"
+cd vrchatapi-javascript
+npm install
+npm run prepare
+echo "1st stage: VRChat NPM Module END"
+cd ..
+echo "2nd stage: VRChat NPM Module START"
+npm install vrchatapi-javascript/
+echo "2nd stage: VRChat NPM Module END"
