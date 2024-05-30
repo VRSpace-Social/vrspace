@@ -5,22 +5,22 @@ import {getAuthCookie, getUserInfo} from "../utils/stableAPI.ts";
 export const routes = new Elysia()
 
     .get("/api/getOnlineFriends", ({set}) => {
-        set.headers['x-powered-by'] = 'Elysia'
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         let friendData = getOnlineFriends();
         return friendData;
     })
     .get("/api/searchFriends", ({set, query}) => {
-        set.headers['x-powered-by'] = 'Elysia'
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(query.query) {
-            let users = searchUsers(query.query);
-            return users;
+            return searchUsers(query.query);
         } else {
             return 'No query provided';
         }
         
     })
     .all('/lmao', () => 'hi')
-    .get('/vrc', ({query}) => {
+    .get('/vrc', ({query, set}) => {
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         let webPage = Bun.file('./web/index.html');
         if(query.query) {
             return searchUsers(query.query);

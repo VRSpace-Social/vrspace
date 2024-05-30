@@ -1,4 +1,4 @@
-import * as vrchat from '../vrchatapi-javascript/dist/index'
+import * as vrchat from "vrchat";
 import {LogManager} from './logger';
 import {env} from "bun";
 import * as fs from "fs";
@@ -6,12 +6,11 @@ import type {AxiosResponse} from "axios";
 import axios from "axios";
 import {Cookie, CookieJar} from 'tough-cookie';
 import type {VRChatCookieFormat, VRSpaceVRCUserAvatar} from "../interfaces/apiHelper";
-import cookie from "@elysiajs/cookie";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
     interface AxiosRequestConfig {
-        jar?: CookieJar;
+        jar?: CookieJar | boolean;
     }
 }
 
@@ -104,24 +103,14 @@ For Auto-Login, you can save the cookie jar in a file, and load it in the Axios 
 */
 async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser>{
     return AuthenticationApi.getCurrentUser().then(async (resp) => {
-        let tempAuthCookie = resp.headers["set-cookie"];
-        console.log(tempAuthCookie);
         if (forceLogin || !resp.data.displayName) {
             if (forceLogin) deleteCookieFile();
-            try {
-                const verifyResp = await AuthenticationApi.verify2FA({
-                    code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
-                });
-                if (verifyResp.data.verified) {
-                    // If Axios cookiejar fucking dies, I'll parse the cookie manually
-                    let tempTwoFactorAuth = verifyResp.headers["set-cookie"]
-                    logger.success("Verified Successfully, welcome to VRSpace!");
-                    if(tempAuthCookie && tempTwoFactorAuth)
-                        setAuthCookie(tempAuthCookie[0], tempTwoFactorAuth[0]);
-
-                }
-            } catch (error) {
-                console.error(error)
+            const verifyResp = await AuthenticationApi.verify2FA({
+                code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
+            });
+            if (verifyResp.data.verified) {
+                logger.success("Verified Successfully, welcome to VRSpace!");
+                setAuthCookie();
             }
         }
         const myself = await getMyself();
@@ -143,34 +132,38 @@ async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser>{
     });
 }
 
+
 async function loginAndSaveCookies(): Promise<void> {
     await doLogin(true);
 }
 
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
-function setAuthCookie(authCookie?: string, twoFactorAuth?: string): void {
-    let jar: CookieJar = new CookieJar();
-    if(authCookie && twoFactorAuth){
-        jar.setCookie(
-            new Cookie(extractCookie(authCookie)),
-            'https://api.vrchat.cloud').then(() => {
-                logger.write("authCookie written to Cookie JSON file")
-            }
-        );
-        jar.setCookie(
-            new Cookie(extractCookie(twoFactorAuth)),
-            'https://api.vrchat.cloud').then(() => {
-                logger.write("authCookie written to Cookie JSON file")
-            }
-        );
+function setAuthCookie(authCookie?: string): void {
+    const jar: CookieJar | boolean | undefined = (axios.defaults)?.jar;
+    if(!jar) {
+        console.log("Cookie jar is undefined")
+        return;
+    }
+    // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
+    if(authCookie) {
+        if (jar instanceof CookieJar) {
+            jar.setCookie(
+                new Cookie({key: 'auth', value: authCookie}),
+                'https://api.vrchat.cloud'
+            ).then(() => logger.write("authCookie written to Cookie JSON file"));
+        }
+    }
+    if (jar instanceof CookieJar) {
         jar.setCookie(
             new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
             'https://api.vrchat.cloud'
         ).then(() => logger.write("apiKey written to Cookie JSON file"));
-        console.log(jar.toJSON())
-        fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
-        logger.success("Cookies file saved")
+
     }
+    if (jar instanceof CookieJar) {
+        fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+    }
+    logger.success("Cookies file saved")
 }
 
 /**

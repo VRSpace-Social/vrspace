@@ -40,6 +40,8 @@ else
     }
     let cookie = "auth=authcookie_49ad8b6b-d114-44cc-aef2-aeb154c0e7a5; Max-Age=604800; Path=/; Expires=Wed, 05 Jun 2024 20:02:17 GMT; HttpOnly; SameSite=Lax";
     console.log(extractCookie(cookie));
+    const res = await findUserAvatar('usr_ca92ff94-4841-4438-8546-7def70a94107')
+    console.log(res);
 
     
     
