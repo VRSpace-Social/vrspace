@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
-import {getAuthCookie, getUserInfo} from "../utils/vrcAPI.ts";
+import {getAuthCookie, getUserInfo} from "../utils/stableAPI.ts";
 
 export const routes = new Elysia()
 

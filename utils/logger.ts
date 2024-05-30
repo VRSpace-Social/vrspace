@@ -120,7 +120,7 @@ export class LogManager {
         let stream = this.openFile();
         stream.write(this.logLine('FATAL', message));
         this.closeFile(stream);
-        this.logToConsole(this.logLine('FATAL', message));
+        this.logToConsole(this.logLine('⚠️ FATAL ⚠️', message));
     }
 
     log(message: any): void {

@@ -1,12 +1,11 @@
-import * as vrchat from '../vrchatapi-javascript/dist/index'
+import * as vrchat from "vrchat";
 import {LogManager} from './logger';
 import {env} from "bun";
 import * as fs from "fs";
-import type {AxiosResponse} from "axios";
 import axios from "axios";
-import {Cookie, CookieJar} from 'tough-cookie';
-import type {VRChatCookieFormat, VRSpaceVRCUserAvatar} from "../interfaces/apiHelper";
-import cookie from "@elysiajs/cookie";
+import { Cookie, CookieJar } from 'tough-cookie';
+import type { AxiosResponse } from "axios";
+import type { VRSpaceVRCUserAvatar } from "../interfaces/apiHelper";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -18,15 +17,14 @@ declare module 'axios' {
 // Cookie Jar Stuff
 let cookies: string;
 
-
 // Logger Stuff
 const debugType: string = 'error';
 const logger: LogManager = new LogManager(debugType, 'VRCHAT-API');
 
 if(await Bun.file('./.env').exists()) {
     if((env.VRC_USERNAME === "" || env.VRC_PASSWORD === "") ||
-    (!env.VRC_USERNAME || !env.VRC_PASSWORD) ||
-    (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) {
+        (!env.VRC_USERNAME || !env.VRC_PASSWORD) ||
+        (env.VRC_USERNAME === "your_vrchat_username" || env.VRC_PASSWORD === "your_vrchat_password")) {
         logger.warn("Please set your VRC_USERNAME and VRC_PASSWORD in your .env file")
         process.exit(1);
     }
@@ -47,7 +45,6 @@ try
     if (cookies !== "") {
         axios.defaults.jar = CookieJar.fromJSON(JSON.parse(cookies));
     }
-
 }
 catch (e)
 {
@@ -78,7 +75,7 @@ const configuration: vrchat.Configuration = new vrchat.Configuration({
     }
 });
 
-// API Methods 
+// API Methods
 const AuthenticationApi: vrchat.AuthenticationApi = new vrchat.AuthenticationApi(configuration);
 const FriendsApi: vrchat.FriendsApi = new vrchat.FriendsApi(configuration);
 const UsersApi: vrchat.UsersApi = new vrchat.UsersApi(configuration);
@@ -104,24 +101,14 @@ For Auto-Login, you can save the cookie jar in a file, and load it in the Axios 
 */
 async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser>{
     return AuthenticationApi.getCurrentUser().then(async (resp) => {
-        let tempAuthCookie = resp.headers["set-cookie"];
-        console.log(tempAuthCookie);
         if (forceLogin || !resp.data.displayName) {
             if (forceLogin) deleteCookieFile();
-            try {
-                const verifyResp = await AuthenticationApi.verify2FA({
-                    code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
-                });
-                if (verifyResp.data.verified) {
-                    // If Axios cookiejar fucking dies, I'll parse the cookie manually
-                    let tempTwoFactorAuth = verifyResp.headers["set-cookie"]
-                    logger.success("Verified Successfully, welcome to VRSpace!");
-                    if(tempAuthCookie && tempTwoFactorAuth)
-                        setAuthCookie(tempAuthCookie[0], tempTwoFactorAuth[0]);
-
-                }
-            } catch (error) {
-                console.error(error)
+            const verifyResp = await AuthenticationApi.verify2FA({
+                code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
+            });
+            if (verifyResp.data.verified) {
+                logger.success("Verified Successfully, welcome to VRSpace!");
+                setAuthCookie();
             }
         }
         const myself = await getMyself();
@@ -148,29 +135,32 @@ async function loginAndSaveCookies(): Promise<void> {
 }
 
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
-function setAuthCookie(authCookie?: string, twoFactorAuth?: string): void {
-    let jar: CookieJar = new CookieJar();
-    if(authCookie && twoFactorAuth){
-        jar.setCookie(
-            new Cookie(extractCookie(authCookie)),
-            'https://api.vrchat.cloud').then(() => {
-                logger.write("authCookie written to Cookie JSON file")
-            }
-        );
-        jar.setCookie(
-            new Cookie(extractCookie(twoFactorAuth)),
-            'https://api.vrchat.cloud').then(() => {
-                logger.write("authCookie written to Cookie JSON file")
-            }
-        );
+function setAuthCookie(authCookie?: string): void {
+    const jar: CookieJar | undefined = (axios.defaults)?.jar;
+    if(!jar) {
+        console.log("Cookie jar is undefined")
+        return;
+    }
+    // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
+    if(authCookie) {
+        if (jar instanceof CookieJar) {
+            jar.setCookie(
+                new Cookie({key: 'auth', value: authCookie}),
+                'https://api.vrchat.cloud'
+            ).then(() => logger.write("authCookie written to Cookie JSON file"));
+        }
+    }
+    if (jar instanceof CookieJar) {
         jar.setCookie(
             new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
             'https://api.vrchat.cloud'
         ).then(() => logger.write("apiKey written to Cookie JSON file"));
-        console.log(jar.toJSON())
-        fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
-        logger.success("Cookies file saved")
+
     }
+    if (jar instanceof CookieJar) {
+        fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+    }
+    logger.success("Cookies file saved")
 }
 
 /**
@@ -201,7 +191,7 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[]> {
         if(axios.isAxiosError(e)) {
             if(e.response?.status === 401) {
                 console.log("[✘] Token maybe invalid");
-                //await doLogin(true);
+                await doLogin(true);
             }
         }
         throw e;
@@ -330,25 +320,6 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
 }
 
 
-function extractCookie(rawCookie: string[1]): VRChatCookieFormat {
-    console.log("raw cookie")
-    console.log(rawCookie)
-    let rawDate = Date.parse(rawCookie.split("Expires=")[1].split(";")[0]);
-    let finalDate = new Date(rawDate);
-    return {
-        key: rawCookie.split("=")[0],
-        value: rawCookie.split("=")[1].split(";")[0],
-        maxAge: Number(rawCookie.split("Max-Age=")[1].split(";")[0]),
-        path: rawCookie.split("Path=")[1].split(";")[0],
-        expires: finalDate,
-        httpOnly: rawCookie.includes("HttpOnly"),
-        sameSite: rawCookie.split("SameSite=")[1].split(";")[0],
-        hostOnly: true,
-        creation: new Date()
-    };
-
-}
-
 async function getMyself(): Promise<vrchat.CurrentUser> {
     logger.write("Getting current user info")
     return AuthenticationApi.getCurrentUser().then((resp) => {
@@ -356,7 +327,7 @@ async function getMyself(): Promise<vrchat.CurrentUser> {
     })
 }
 
-export 
+export
 {
     getAuthCookie,
     getUserInfo,

@@ -1,5 +1,5 @@
 import type {LimitedUser} from "vrchat";
-import {getAuthCookie, seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI";
+import {getAuthCookie, seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./stableAPI";
 import type { FriendOnlineData } from "../interfaces/apiHelper";
 import { LogManager } from "./logger";
 
