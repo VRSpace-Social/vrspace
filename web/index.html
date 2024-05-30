@@ -20,12 +20,17 @@
     }
 
     .friend-card img {
-      width: 100%;
-      height: auto;
+      width: 348px;
+      height: 261px;
+      object-fit: cover;
     }
 
     .friend-card .card-body {
       padding: 10px;
+    }
+
+    .friend-card:hover {
+      background-color: #4b4b4b; /* Change this to the color you want */
     }
 
     .search-bar {
@@ -57,7 +62,7 @@
     </div>
   </nav>
 
-  <div class="container mt-5">
+  <div class="container mt-4">
     <div id="spinner" class="spinner-container">
       <div class="spinner-border text-light" role="status">
         <span class="sr-only">Loading...</span>
@@ -65,7 +70,7 @@
       <div>Loading friends data, please wait...</div>
     </div>
     <div id="online-friends" style="display:none;">
-      <h2 class="category-title">Online Friends</h2>
+      <h2 class="category-title">Friends in Worlds you can join!</h2>
       <div class="row" id="online-friends-list">
         <!-- Online friends cards will be injected here -->
       </div>
@@ -125,7 +130,7 @@
         if (friend.instanceType === 'Private Instance') {
           let friendCard = `
           <div class="col-md-4">
-            <div class="card friend-card">
+            <div class="card friend-card" id="friend-card">
               <img src="${friend.worldImageUrl || 'default-image.jpg'}" class="card-img-top" alt="${friend.worldName}">
               <div class="card-body">
                 <h5 class="card-title">${friend.username} is playing</h5>
@@ -193,6 +198,13 @@
         spinner.hide();
         displayFriends(friendsData);
       });
+
+      // Add click event to friend cards
+      $('#friend-card').on('click', function() {
+        console.log('Card clicked: ' + this.id);
+        // Add your code here to handle the click event
+      });
+
 
       $('#search-input').on('change', function () {
         const query = $(this).val();

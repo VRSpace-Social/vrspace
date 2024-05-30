@@ -20,6 +20,9 @@ async function getOnlineFriends() {
     logger.working("Getting online friends data...");
     const friendsDataToSend: FriendOnlineData[] = [];
     let friends: LimitedUser[] | undefined = await seeOnlineFriends();
+    if(!friends || friends.length == 0 ) {
+        logger.fatal("API is not returning any data!! Could be an issue with VRChat API");
+    }
     if (friends) {
         // Rest of the code
         for (let friend of friends) {
@@ -40,7 +43,7 @@ async function getOnlineFriends() {
                 let userData = await getUserInfo(friend.id);
                 if (userData?.state === "active") {
                     friendsDataToSend.push({
-                        worldImageUrl: null,
+                        worldImageUrl: userData.profilePicOverride? userData.profilePicOverride:  userData.currentAvatarImageUrl,
                         worldName: "",
                         username: friend.displayName,
                         instanceType: "Is online on VRChat Website/API",
@@ -49,7 +52,7 @@ async function getOnlineFriends() {
                     });
                 } else if (friend.location === "private") {
                     friendsDataToSend.push({
-                        worldImageUrl: null,
+                        worldImageUrl: friend.profilePicOverride? friend.profilePicOverride:  friend.currentAvatarImageUrl,
                         username: friend.displayName,
                         worldName: "",
                         instanceType: "Private Instance",
