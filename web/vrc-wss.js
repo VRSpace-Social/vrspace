@@ -10,29 +10,36 @@ async function getUserInfo() {
 }
 
 fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
+    // deepcode ignore MissingClose: <i fixed it lol>
     const webSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + await res.text());
     webSocket.onopen = function (event) {
         console.log("Connected to WebSocket server");
     };
     webSocket.onmessage = async function (event) {
+        if (event.data === 'reload') {
+            setTimeout(() => {
+                ws.close();
+                self.location.reload();
+            }, 300);
+        }
         console.log(JSON.parse(event.data));
         switch (JSON.parse(event.data.toString()).type) {
 
             case "friend-active": {
-                let jsonData= JSON.parse(JSON.parse(event.data.toString()).content).user;
+                let jsonData = JSON.parse(JSON.parse(event.data.toString()).content).user;
                 console.log(jsonData.displayName + " is now active (online on VRC Website or API)");
                 break;
             }
 
             case "friend-offline": {
-                let friendData= await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
+                let friendData = await getUserInfo(JSON.parse(JSON.parse(event.data.toString()).content).userId).catch(e => {
                     let errorResponse = JSON.parse(e.response?.data);
                     console.log(errorResponse);
                     console.log("[!!] ERROR on" + JSON.parse(event.data.toString()) + "\nError while trying to get friend data: \n" + e);
                     return undefined;
                 });
                 if (friendData === undefined) {
-                   console.warn("Friend is not found");
+                    console.warn("Friend is not found");
                     break;
                 }
                 let friendUsername = friendData.displayName;

@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
-import {getAuthCookie, getUserInfo} from "../utils/vrcAPI.ts";
+import {getAuthCookie, getUserInfo} from "../utils/stableAPI.ts";
 
 export const routes = new Elysia()
 
@@ -35,9 +35,9 @@ export const routes = new Elysia()
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         return await getAuthCookie();
     })
-.get('/api/getUserInfo', async ({query, set}) => {
-    set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
-    if(query.userID) {
-        return await getUserInfo(query.userID);
-    }
-})
+    .get('/api/getUserInfo', async ({query, set}) => {
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
+        if(query.userID) {
+            return await getUserInfo(query.userID);
+        }
+    })

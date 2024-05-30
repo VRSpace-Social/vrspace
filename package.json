@@ -4,7 +4,7 @@
   "type": "module",
   "devDependencies": {
     "@types/bun": "latest",
-    "vrchat": "file://home/foisx/Documenti/Gits/vrspace/vrchatapi-javascript"
+    "vrchat": "file:vrchatapi-javascript"
   },
   "scripts": {
     "build": "tsc",
