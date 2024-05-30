@@ -1,24 +1,23 @@
 
-async function getInstanceInfo(userID) {
-
+async function getInstanceInfo() {
+    //TODO: Implement this function
 }
 
-async function getUserInfo() {
+async function getUserInfo(userID) {
     const result = await fetch('http://localhost:3000/api/getUserInfo?userID=' + userID);
     console.log(result)
     return result.json();
 }
 
 fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
-    // deepcode ignore MissingClose: <i fixed it lol>
     const webSocket = new WebSocket("wss://pipeline.vrchat.cloud/?authToken=" + await res.text());
-    webSocket.onopen = function (event) {
+    webSocket.onopen = function () {
         console.log("Connected to WebSocket server");
     };
     webSocket.onmessage = async function (event) {
         if (event.data === 'reload') {
             setTimeout(() => {
-                ws.close();
+                webSocket.close();
                 self.location.reload();
             }, 300);
         }
@@ -114,7 +113,7 @@ fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
 
         }
     };
-    webSocket.onclose = function (event) {
+    webSocket.onclose = function () {
         console.log("Disconnected from WebSocket server");
     };
 });

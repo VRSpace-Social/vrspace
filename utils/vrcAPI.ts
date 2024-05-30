@@ -134,7 +134,13 @@ async function loginAndSaveCookies(): Promise<void> {
     await doLogin(true);
 }
 
+
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
+/**
+ * Set the authentication cookie for API calls.
+ * @param {string} authCookie - The authentication cookie value.
+ * @return {void}
+ */
 function setAuthCookie(authCookie?: string): void {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
     if(!jar) {
@@ -143,23 +149,16 @@ function setAuthCookie(authCookie?: string): void {
     }
     // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
     if(authCookie) {
-        if (jar instanceof CookieJar) {
-            jar.setCookie(
-                new Cookie({key: 'auth', value: authCookie}),
-                'https://api.vrchat.cloud'
-            ).then(() => logger.write("authCookie written to Cookie JSON file"));
-        }
-    }
-    if (jar instanceof CookieJar) {
         jar.setCookie(
-            new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
+            new Cookie({key: 'auth', value: authCookie}),
             'https://api.vrchat.cloud'
-        ).then(() => logger.write("apiKey written to Cookie JSON file"));
-
+        ).then(() => logger.write("authCookie written to Cookie JSON file"));
     }
-    if (jar instanceof CookieJar) {
-        fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
-    }
+    jar.setCookie(
+        new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
+        'https://api.vrchat.cloud'
+    ).then(() => logger.write("apiKey written to Cookie JSON file"));
+    fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
     logger.success("Cookies file saved")
 }
 
@@ -278,6 +277,14 @@ async function getAuthCookie(): Promise<string> {
 }
 
 
+/**
+ * Retrieves information about a specific instance.
+ *
+ * @param {string} worldId - The ID of the world in which the instance is located.
+ * @param {string} instanceId - The ID of the specific instance.
+ * @returns {Promise<vrchat.Instance>} A Promise that resolves to an object containing instance data.
+ * @throws {Error} If there is an error while trying to retrieve the instance data.
+ */
 async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance> {
     logger.write("Getting instance data for: "+worldId+" - "+instanceId)
     return InstancesApi.getInstance(worldId, instanceId).then((resp) => {
@@ -287,6 +294,13 @@ async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrc
     })
 }
 
+/**
+ * Fetches user avatar data for the given user ID.
+ *
+ * @param {string} userId - The ID of the user.
+ * @param {boolean} [getOnlyAvatarName] - Optional flag to specify whether to only retrieve the avatar name. Defaults to false.
+ * @returns {Promise<AxiosResponse|VRSpaceVRCUserAvatar>} - The user avatar data.
+ */
 async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Promise<AxiosResponse | VRSpaceVRCUserAvatar> {
     logger.write("Getting avatar data for: "+userId)
     return getUserInfo(userId).then(async (userData) => {
@@ -320,6 +334,11 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
 }
 
 // Right now we don't use this, but it's here for future reference, in case we need to manually parse the cookies
+/**
+ * Extracts cookie data from a given raw cookie string.
+ * @param {string} rawCookie - The raw cookie string to extract data from.
+ * @returns {VRChatCookieFormat} - An object containing the extracted cookie data.
+ */
 function extractCookie(rawCookie: string[1]): VRChatCookieFormat {
     console.log("raw cookie")
     console.log(rawCookie)
