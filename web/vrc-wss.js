@@ -1,6 +1,8 @@
 
 async function getInstanceInfo() {
     //TODO: Implement this function
+    const result = await fetch('http://localhost:3000/api/getInstanceInfo?worldId=' + worldId + '&instanceId=' + instanceId);
+    return result.json();
 }
 
 async function getUserInfo(userID) {

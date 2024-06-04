@@ -3,6 +3,7 @@ import { routes } from './routes/main.routes.ts' //add this line
 import { html } from '@elysiajs/html';
 import { staticPlugin } from '@elysiajs/static';
 import { LogManager } from './utils/logger.ts';
+import { cors } from '@elysiajs/cors'
 
 // Logger Stuff
 const PORT: number = 3000;
@@ -20,6 +21,9 @@ const app = new Elysia()
     .use(staticPlugin({
         assets : "./web"
       }))
+      .use(cors({
+        origin: ['http://localhost:5173', 'http://localhost:3000', '*'],
+    }))
     .use(html())
     .listen(PORT)
     logger.success("Server started on port " + PORT);

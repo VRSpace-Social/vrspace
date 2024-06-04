@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
-import {getAuthCookie, getUserInfo} from "../utils/vrcAPI.ts";
+import {getAuthCookie, getUserInfo, getInstanceInfo} from "../utils/vrcAPI.ts";
 
 export const routes = new Elysia()
 
@@ -18,7 +18,7 @@ export const routes = new Elysia()
         }
         
     })
-    .all('/lmao', () => 'hi')
+    .all('/lmao', () => 'hi lmao')
     .get('/vrc', ({query, set}) => {
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         let webPage = Bun.file('./web/index.html');
@@ -40,4 +40,19 @@ export const routes = new Elysia()
         if(query.userID) {
             return await getUserInfo(query.userID);
         }
+    })
+    .get('/api/getInstanceInfo', async ({query, set}) => {
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
+        if(query.instanceID && query.worldID) {
+            return await getInstanceInfo(query.worldID ,query.instanceID);
+        }
+    })
+    .get('/test', ({set}) => {
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
+        let webPage = Bun.file('./web/test.html');
+        return webPage;
+    })
+    .post('/clicked', ({set}) => {
+        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
+        return 'hi';
     })

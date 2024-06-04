@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online Friends</title>
+  <title>VRSpace Alpha</title>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
@@ -30,7 +30,7 @@
     }
 
     .friend-card:hover {
-      background-color: #4b4b4b; /* Change this to the color you want */
+      background-color: #4b4b4b;
     }
 
     .search-bar {
@@ -46,6 +46,31 @@
       text-align: center;
       margin-top: 20px;
     }
+
+    .dropdown-menu-notifications {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .dropdown-item {
+      color: black;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1060;
+    }
+
+    .toast-body {
+      background-color: #2e2e2e;
+      color: white;
+    }
+
+    .toast {
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -57,7 +82,17 @@
       <input id="search-input" class="form-control mr-sm-2" type="search" placeholder="Search for friends..." aria-label="Search">
     </form>
     <div class="navbar-nav">
-      <a class="nav-item nav-link" href="#"><i class="fas fa-bell"></i></a>
+      <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-bell"></i>
+          <span class="badge badge-light">3</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right dropdown-menu-notifications" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">Friend Request from John</a>
+          <a class="dropdown-item" href="#">Jane liked your post</a>
+          <a class="dropdown-item" href="#">Server maintenance at 12:00 AM</a>
+        </div>
+      </div>
       <a class="nav-item nav-link" href="#"><i class="fas fa-user-circle"></i></a>
     </div>
   </nav>
@@ -76,6 +111,8 @@
       </div>
     </div>
 
+    
+
     <div id="private-worlds" style="display:none;">
       <h2 class="category-title">Friends in Private Worlds</h2>
       <div class="row" id="private-friends-list">
@@ -91,12 +128,30 @@
     </div>
   </div>
 
+  <a href="/test">Test</a>
+
+  <!-- Toast container -->
+  <div class="toast-container">
+    <div class="toast" id="liveToast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="5000">
+      <div class="toast-header">
+        <img src="..." class="rounded mr-2" alt="...">
+        <strong class="mr-auto">Notification</strong>
+        <small>Just now</small>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="toast-body" id="toastBody">
+        <!-- Toast text will be inserted here -->
+      </div>
+    </div>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="https://kit.fontawesome.com/9071d6386d.js" crossorigin="anonymous"></script>
   <script>
-    // Sample JSON response from middleware
     const friendsData = async () => {
       const response = await fetch('http://localhost:3000/api/getOnlineFriends');
       const data = await response.json();
@@ -105,7 +160,6 @@
 
     const searchFriends = async (query) => {
       const response = await fetch(`http://localhost:3000/api/searchFriends?query=${query}`);
-      console.log(response);
       const data = await response.json();
       return data;
     };
@@ -188,6 +242,11 @@
       }
     };
 
+    const showToast = (toastText) => {
+      $('#toastBody').text(toastText);
+      $('#liveToast').toast('show');
+    };
+
     $(document).ready(function () {
       const spinner = $('#spinner');
       const onlineFriendsList = $('#online-friends-list');
@@ -199,15 +258,13 @@
         displayFriends(friendsData);
       });
 
-      // Add click event to friend cards
       $('#friend-card').on('click', function() {
         console.log('Card clicked: ' + this.id);
-        // Add your code here to handle the click event
       });
-
 
       $('#search-input').on('change', function () {
         const query = $(this).val();
+        showToast(`Searching for friends with query: ${query}`);
         if (query.length > 0) {
           searchFriends(query).then(searchResults => {
             onlineFriendsList.empty();
