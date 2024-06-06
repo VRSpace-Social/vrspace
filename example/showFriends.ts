@@ -1,7 +1,7 @@
 // This is a simple file to show how to use the VRC API to get a list of friends.
 
 // First, I'll show the simple way to get a list of friends, by using our already implemented function `seeOnlineFriends`.
-import { seeOnlineFriends } from "../utils/vrcAPI";
+import { seeOnlineFriends } from "../utils/vrchatAPI.ts";
 
 // Remember that you always need an async for use the already implemented functions.
 async function main() {

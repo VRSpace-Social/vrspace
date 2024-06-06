@@ -1,5 +1,5 @@
 import type {LimitedUser} from "vrchat";
-import {seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrcAPI.ts";
+import {seeOnlineFriends, getInstanceInfo, getUserInfo, searchUser } from "./vrchatAPI.ts";
 import type { FriendOnlineData } from "../interfaces/apiHelper";
 import { LogManager } from "./logger";
 

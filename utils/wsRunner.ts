@@ -1,5 +1,5 @@
 import type { User } from "vrchat";
-import { getAuthCookie, getUserInfo, loginAndSaveCookies, getInstanceInfo } from "./vrcAPI";
+import { getAuthCookie, getUserInfo, loginAndSaveCookies, getInstanceInfo } from "./vrchatAPI.ts";
 import WebSocket from "ws";
 import { LogManager } from './logger';
 import { argv } from "bun";
