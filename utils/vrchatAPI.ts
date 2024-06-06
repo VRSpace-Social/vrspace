@@ -340,8 +340,8 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
  * @returns {VRChatCookieFormat} - An object containing the extracted cookie data.
  */
 function extractCookie(rawCookie: string[1]): VRChatCookieFormat {
-    console.log("raw cookie")
-    console.log(rawCookie)
+    logger.debug("Raw cookie from doLogin: ")
+    logger.debug(rawCookie)
     let rawDate = Date.parse(rawCookie.split("Expires=")[1].split(";")[0]);
     let finalDate = new Date(rawDate);
     return {
