@@ -1,7 +1,7 @@
 import * as vrchat from "vrchat";
 import {LogManager} from './logger';
 import {env} from "bun";
-import * as fs from "fs";
+import {writeFileSync, readFileSync, unlinkSync} from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
@@ -41,7 +41,7 @@ logger.debug("Running Axios version: "+axios.VERSION)
 // In any case, set the axios defaults since we need that to attach to VRC axios instance to use the cookies
 try
 {
-    cookies = fs.readFileSync("./cookies.json", "utf8");
+    cookies = readFileSync("./cookies.json", "utf8");
     if (cookies !== "") {
         axios.defaults.jar = CookieJar.fromJSON(JSON.parse(cookies));
     }
@@ -158,7 +158,7 @@ function setAuthCookie(authCookie?: string): void {
         new Cookie({key: 'apiKey', value: 'JlE5Jldo5Jibnk5O5hTx6XVqsJu4WJ26'}),
         'https://api.vrchat.cloud'
     ).then(() => logger.write("apiKey written to Cookie JSON file"));
-    fs.writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
+    writeFileSync("./cookies.json", JSON.stringify(jar.toJSON()));
     logger.success("Cookies file saved")
 }
 
@@ -169,7 +169,7 @@ function setAuthCookie(authCookie?: string): void {
  */
 function deleteCookieFile(): void {
     try {
-        fs.unlinkSync("./cookies.json");
+        unlinkSync("./cookies.json");
         logger.success("Cookies file deleted")
     } catch (e) {
         console.error("Error: "+e)
@@ -363,7 +363,17 @@ async function getMyself(): Promise<vrchat.CurrentUser> {
     logger.write("Getting current user info")
     return AuthenticationApi.getCurrentUser().then((resp) => {
         return resp.data;
-    })
+    }).catch(async (e) => {
+        if(axios.isAxiosError(e)) {
+            if(e.response?.status === 401) {
+                console.log("[✘] Token maybe invalid");
+                await doLogin(true);
+            } else {
+                throw e;
+            }
+        }
+        throw e;
+    });
 }
 
 export

@@ -55,22 +55,6 @@
     .dropdown-item {
       color: black;
     }
-
-    .toast-container {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 1060;
-    }
-
-    .toast-body {
-      background-color: #2e2e2e;
-      color: white;
-    }
-
-    .toast {
-      opacity: 1;
-    }
   </style>
 </head>
 
@@ -243,11 +227,6 @@
       }
     };
 
-    const showToast = (toastText) => {
-      $('#toastBody').text(toastText);
-      $('#liveToast').toast('show');
-    };
-
     $(document).ready(function () {
       const spinner = $('#spinner');
       const onlineFriendsList = $('#online-friends-list');
@@ -265,7 +244,6 @@
 
       $('#search-input').on('change', function () {
         const query = $(this).val();
-        showToast(`Searching for friends with query: ${query}`);
         if (query.length > 0) {
           searchFriends(query).then(searchResults => {
             onlineFriendsList.empty();
