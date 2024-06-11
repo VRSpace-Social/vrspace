@@ -288,6 +288,7 @@ async function getAuthCookie(): Promise<string> {
 async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance> {
     logger.write("Getting instance data for: "+worldId+" - "+instanceId)
     return InstancesApi.getInstance(worldId, instanceId).then((resp) => {
+        console.log(resp)
         return resp.data;
     }).catch((e) => {
         throw new Error(`Error while trying to get instance data: ${e.response}`);
