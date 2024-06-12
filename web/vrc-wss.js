@@ -1,6 +1,8 @@
 
-async function getInstanceInfo() {
+async function getInstanceInfo(worldId, instanceId) {
     //TODO: Implement this function
+    const result = await fetch('http://localhost:3000/api/getInstanceInfo?worldId=' + worldId + '&instanceId=' + instanceId);
+    return result.json();
 }
 
 async function getUserInfo(userID) {
@@ -21,7 +23,7 @@ fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
                 self.location.reload();
             }, 300);
         }
-        console.log(JSON.parse(event.data));
+        
         switch (JSON.parse(event.data.toString()).type) {
 
             case "friend-active": {
@@ -68,15 +70,18 @@ fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
             }
 
             case "friend-location": {
+                debugger;
                 let jsonData = JSON.parse(JSON.parse(event.data.toString()).content);
                 let location = jsonData.location;
                 let travelingToLocation = jsonData.travelingToLocation;
+                
 
                 if (location === "traveling" && travelingToLocation !== "" && jsonData.worldId.substring(0, 5) === "wrld_") {
                     // User IS TRAVELING to instance
                     let worldId = jsonData.worldId;
                     let instanceId = jsonData.travelingToLocation.split(":")[1];
                     let instanceData = await getInstanceInfo(worldId, instanceId).catch(e => {
+                        console.log(e.response)
                         console.error("Error while trying to get instance data: " + e);
                         return undefined;
                     });
@@ -87,6 +92,7 @@ fetch('http://localhost:3000/api/getAuthCookie').then(async res => {
                     let worldId = jsonData.worldId;
                     let instanceId = location.split(":")[1];
                     let instanceData = await getInstanceInfo(worldId, instanceId).catch(e => {
+                        console.log(e.response)
                         console.error("Error while trying to get instance data: " + e);
                         return undefined;
                     });

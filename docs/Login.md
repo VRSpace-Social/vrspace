@@ -34,14 +34,14 @@ Also..
 
 > **The cookies in the cookiejar are very powerful as it can be used to login to the VRChat API, so keep it safe!**
 
-For more information about the cookiejar and cookies in general and their use here, consult the comments on `vrcAPI.ts`.
+For more information about the cookiejar and cookies in general and their use here, consult the comments on `vrchatAPI.ts`.
 
 
 ## Running test code
-If you want to experiment with some code you added to `vrcAPI.ts`, please add your testing code to this file:
+If you want to experiment with some code you added to `vrchatAPI.ts`, please add your testing code to this file:
 > test/testZone.ts
 
-To ensure that the main `vrcAPI.ts` its kept clean.
+To ensure that the main `vrchatAPI.ts` its kept clean.
 
 
 ## Example code to get comfy with the login process

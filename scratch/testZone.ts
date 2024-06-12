@@ -1,5 +1,5 @@
 import { doLogin, doLogout, getAuthCookie, getNotifications,
-    getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo, findUserAvatar } from '../utils/vrcAPI.ts';
+    getUserInfo, searchUser, seeOnlineFriends, getInstanceInfo, findUserAvatar } from '../utils/vrchatAPI.ts';
 import type {VRChatCookieFormat} from "../interfaces/apiHelper";
 
 async function manualLoginLogout()
