@@ -35,7 +35,6 @@ export const routes = new Elysia()
         return Bun.file('./web/vrc-wss.js');
     })
     .get('/api/getAuthCookie', async ({set, headers}) => {
-        console.log(headers)
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(headers['user-agent'] !== 'VRSpaceApp') {
             set.status = 404
@@ -59,13 +58,15 @@ export const routes = new Elysia()
     })
     .get('/api/getInstanceInfo', async ({query, set}) => {
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
-        console.log(query)
+        console.table(query)
         if(query.instanceID && query.worldID) {
-            return await getInstanceInfo(query.worldID ,query.instanceID);
+            const instanceInfo = await getInstanceInfo(query.instanceID, query.worldID);
+            return instanceInfo;
+        } else {
+            console.log('No instanceID or worldID provided')
         }
     })
     .get('/test', ({set, headers}) => {
-        console.log(headers)
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(headers['x-vrspace-version'] === 'uwu' && headers['user-agent'] === 'VRSpaceAPI') {
             return 'uwu';

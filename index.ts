@@ -15,11 +15,13 @@ const vrsLogger: LogManager = new LogManager(debugType, 'VRSPACE-API');
 vrsLogger.info("Starting VRSpace API Server...");
 
 const app = new Elysia()
+/*
     .use(
         logger({
         level: "error",
         })
     )
+*/
     .onError(({ code }) => {
         if (code === 'NOT_FOUND')
             return 'Route not found :('

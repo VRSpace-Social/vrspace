@@ -208,7 +208,17 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     logger.working("Getting user info for: "+userId)
     return UsersApi.getUser(userId).then((resp) => {
         return resp.data;
-    })
+    }).catch(async (e) => {
+        if(axios.isAxiosError(e)) {
+            if(e.response?.status === 401) {
+                console.log("[✘] Token maybe invalid");
+                await doLogin(true);
+            }
+        } else {
+            console.log(e)
+        }
+        throw e;
+    });
 }
 
 /**
@@ -288,7 +298,7 @@ async function getAuthCookie(): Promise<string> {
 async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance> {
     logger.write("Getting instance data for: "+worldId+" - "+instanceId)
     return InstancesApi.getInstance(worldId, instanceId).then((resp) => {
-        console.log(resp)
+        logger.success("Found something")
         return resp.data;
     }).catch((e) => {
         throw new Error(`Error while trying to get instance data: ${e.response}`);
