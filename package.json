@@ -11,7 +11,9 @@
     "start": "bun index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "example": "bun scratch/testZone.ts",
-    "compile": "bun build ./index.ts --compile --outfile out/api"
+    "compile-dev": "bun build ./index.ts --compile --outfile out/api",
+    "compile-prod": "bun build ./index.ts --compile --outfile out/api --minify-whitespace --minify-identifiers --minify-syntax --sourcemap",
+    "compile": "echo \"Please specify a compile target: 'compile-dev' or 'compile-prod'\""
   },
   "peerDependencies": {
     "typescript": "^5.4.5"
@@ -24,6 +26,7 @@
     "@elysiajs/static": "^1.0.3",
     "date-fns": "^3.6.0",
     "elysia": "^1.0.23",
+    "elysia-rate-limit": "^4.1.0",
     "json-difference": "^1.16.1",
     "tough-cookie": "^4.1.4"
   },

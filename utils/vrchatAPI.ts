@@ -46,10 +46,15 @@ try
         axios.defaults.jar = CookieJar.fromJSON(JSON.parse(cookies));
     }
 }
-catch (e)
+catch (e: any)
 {
-    console.log("Error: "+e)
-    console.warn("Cookie file not found, you need to login first")
+    if(e.code === "ENOENT") {
+        logger.warn("Cookie file not found, you need to login first")
+    } else {
+        logger.error("Error while reading the cookie file: ");
+        logger.error(e);
+    }
+    
 }
 finally
 {
@@ -62,6 +67,8 @@ logger.info("Creating VRC Login vars and client");
 const VRC: string | undefined = env.VRC_APIKEY
 // User Agent for the VRChat API, otherwise Cloudflare will block you
 const USER_AGENT: string = "VRSpaceServer/0.0.1 - dev@vrspace.social";
+
+logger.debug("Using VRChat User: "+env.VRC_USERNAME)
 
 // Configuration used for the wrapper
 const configuration: vrchat.Configuration = new vrchat.Configuration({
@@ -144,7 +151,8 @@ async function loginAndSaveCookies(): Promise<void> {
 function setAuthCookie(authCookie?: string): void {
     const jar: CookieJar | undefined = (axios.defaults)?.jar;
     if(!jar) {
-        console.log("Cookie jar is undefined")
+        logger.fatal("Cookie jar is undefined!")
+        logger.warn("You will need to login again if you restart the server")
         return;
     }
     // We only add the AuthCookie and the API Key since the TwoFactorAuth is already in the cookie jar
@@ -189,7 +197,7 @@ async function seeOnlineFriends(): Promise<vrchat.LimitedUser[]> {
     }).catch(async (e) => {
         if(axios.isAxiosError(e)) {
             if(e.response?.status === 401) {
-                console.log("[✘] Token maybe invalid");
+                logger.warn("[✘] Token maybe invalid");
                 await doLogin(true);
             }
         }
@@ -211,7 +219,7 @@ async function getUserInfo(userId: string): Promise<vrchat.User | undefined>{
     }).catch(async (e) => {
         if(axios.isAxiosError(e)) {
             if(e.response?.status === 401) {
-                console.log("[✘] Token maybe invalid");
+                logger.warn("[✘] Token maybe invalid");
                 await doLogin(true);
             }
         } else {
@@ -298,7 +306,6 @@ async function getAuthCookie(): Promise<string> {
 async function getInstanceInfo(worldId: string, instanceId: string): Promise<vrchat.Instance> {
     logger.write("Getting instance data for: "+worldId+" - "+instanceId)
     return InstancesApi.getInstance(worldId, instanceId).then((resp) => {
-        logger.success("Found something")
         return resp.data;
     }).catch((e) => {
         throw new Error(`Error while trying to get instance data: ${e.response}`);
@@ -377,7 +384,7 @@ async function getMyself(): Promise<vrchat.CurrentUser> {
     }).catch(async (e) => {
         if(axios.isAxiosError(e)) {
             if(e.response?.status === 401) {
-                console.log("[✘] Token maybe invalid");
+                logger.warn("[✘] Token maybe invalid");
                 await doLogin(true);
             } else {
                 throw e;

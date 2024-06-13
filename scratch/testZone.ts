@@ -20,7 +20,7 @@ if(debugRun)
     });
 else
     console.log("[!] DEBUG_RUN is not set to true");
-    const res = await findUserAvatar('usr_ca92ff94-4841-4438-8546-7def70a94107')
+    const res = await getInstanceInfo('wrld_900dd077-1337-c0fe-babe-71de05ea12c4', "29051~hidden(usr_96462a96-0018-4f9b-b7b3-8b54c4d7af34)")
     console.log(res);
 
     
