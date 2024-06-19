@@ -106,17 +106,28 @@ This token is also set up by the [Set-Cookie] header, so you need to save it in 
 For Auto-Login, you can save the cookie jar in a file, and load it in the Axios defaults for the API.
 (See the function 'setAuthCookie')
 */
-async function doLogin(forceLogin?: boolean): Promise<vrchat.CurrentUser>{
+async function doLogin(forceLogin?: boolean, string2FA?: string): Promise<vrchat.CurrentUser>{
     return AuthenticationApi.getCurrentUser().then(async (resp) => {
         if (forceLogin || !resp.data.displayName) {
             if (forceLogin) deleteCookieFile();
-            const verifyResp = await AuthenticationApi.verify2FA({
-                code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
-            });
-            if (verifyResp.data.verified) {
-                logger.success("Verified Successfully, welcome to VRSpace!");
-                setAuthCookie();
+            if(string2FA !== "" && string2FA !== undefined) {
+                const verifyResp = await AuthenticationApi.verify2FA({
+                    code: string2FA
+                });
+                if (verifyResp.data.verified) {
+                    logger.success("Verified Successfully, welcome to VRSpace!");
+                    setAuthCookie();
+                }
+            } else {
+                const verifyResp = await AuthenticationApi.verify2FA({
+                    code: prompt("[*] Please enter your two factor code: ")?.toString() ?? ""
+                });
+                if (verifyResp.data.verified) {
+                    logger.success("Verified Successfully, welcome to VRSpace!");
+                    setAuthCookie();
+                }
             }
+            
         }
         const myself = await getMyself();
         logger.success("Welcome Back "+myself?.displayName+" to VRSpace!");
@@ -141,6 +152,33 @@ async function loginAndSaveCookies(): Promise<void> {
     await doLogin(true);
 }
 
+
+async function validateAuthCookie(): Promise<boolean> {
+    const cookieFileAuthCookie = await getAuthCookie().catch((e) => {
+        if(e.message === "No auth cookie found, please login first") {
+            return undefined;
+        }
+    });
+    logger.working("Validating AuthCookie..")
+    return AuthenticationApi.verifyAuthToken().then((resp) => {
+        if(resp.data.ok && resp.data.token === cookieFileAuthCookie) {
+            logger.success("AuthCookie is valid and matches the saved cookie");
+            return true;
+        } else {
+            logger.warn("AuthCookie is invalid, please login again");
+            return false;
+        }
+       
+    }).catch(async (e) => {
+        if(axios.isAxiosError(e)) {
+            if(e.response?.status === 401) {
+                logger.warn("AuthCookie is invalid or non existent, please login again");
+                return false;
+            }
+        }
+        throw e;
+    });
+}
 
 // Saves the AuthCookie and TwoFactorAuth from the CookieJar into a JSON file
 /**
@@ -406,5 +444,7 @@ export
     loginAndSaveCookies,
     getInstanceInfo,
     findUserAvatar,
-    getMyself
+    getMyself,
+    deleteCookieFile,
+    validateAuthCookie
 }

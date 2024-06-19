@@ -3,6 +3,60 @@ import { routes } from './routes/main.routes.ts'
 import { LogManager } from './utils/logger.ts';
 import { cors } from '@elysiajs/cors';
 import { rateLimit } from 'elysia-rate-limit';
+import {deleteCookieFile, doLogin, validateAuthCookie} from './utils/vrchatAPI.ts';
+
+import readline from 'readline';
+
+// Create a readline interface
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// Function to handle user input
+const handleInput = (userInput: string) => {
+switch (userInput) {
+    case 'delete-cookie':
+        deleteCookieFile();
+        break;
+    case 'validate':
+        validateAuthCookie();
+        break;
+    case 'auth':
+        rl.question('Enter your 2FA code: ', (twoFactorCode) => {
+            doLogin(true, twoFactorCode);
+        });
+        break;
+    case 'help':
+        console.log('Commands:');
+        console.log('  delete-cookie - Delete the cookie file');
+        console.log('  validate - Validate if the current session is authenticated with VRChat');
+        console.log('  auth - Force re-authentication with VRChat');
+        console.log('  help - Show this help message');
+        console.log('  stop - Stop the server');
+        break;
+    case 'clear':
+        console.clear();
+        break;
+    case 'stop':
+        rl.close();
+        process.exit();
+    case 'exit':
+        rl.close();
+        process.exit();
+    default:
+        console.log('Unrecognized command.');
+        break;
+}
+};
+
+// Function to prompt the user for input
+const promptUser = () => {
+  rl.question('VRS-$: ', (userInput) => {
+    handleInput(userInput);
+    promptUser(); // Prompt again after handling input
+  });
+};
 
 // Logger Stuff
 const PORT: number = 3000;
@@ -16,6 +70,9 @@ console.log("\r\n _    ______  _____                     \r\n| |  \/ \/ __ \\\/ 
 vrsLogger.info("Running on OS: " + process.platform + " " + process.arch);
 vrsLogger.info("Bun version: "+ Bun.version);
 
+
+// Start the initial prompt
+promptUser();
 
 const app = new Elysia()
     .onError(({ code }) => {
@@ -47,7 +104,5 @@ const app = new Elysia()
     })
     .listen(PORT)
     vrsLogger.success("Server started on port " + PORT);
-
-
 
 export type App = typeof app;
