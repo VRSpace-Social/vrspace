@@ -1,6 +1,6 @@
-import { Elysia } from "elysia";
-import { getOnlineFriends, searchUsers } from "../utils/apiHelper";
-import {getAuthCookie, getUserInfo, getInstanceInfo} from "../utils/vrchatAPI.ts";
+import {Elysia} from "elysia";
+import {getOnlineFriends, searchUsers} from "../utils/apiHelper";
+import {getAuthCookie, getInstanceInfo, getUserInfo} from "../utils/vrchatAPI.ts";
 
 export const routes = new Elysia()
     .get("/hi", () => {
@@ -8,8 +8,7 @@ export const routes = new Elysia()
     })
     .get("/api/getOnlineFriends", ({set}) => {
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
-        let friendData = getOnlineFriends();
-        return friendData;
+        return getOnlineFriends();
     })
     .get("/api/searchFriends", ({set, query}) => {
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
@@ -25,6 +24,7 @@ export const routes = new Elysia()
         return Bun.file('./web/vrc-wss.js');
     })
     .get('/api/getAuthCookie', async ({set, headers}) => {
+        console.log(headers)
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(headers['user-agent'] !== 'VRSpaceApp') {
             set.status = 404
@@ -50,8 +50,7 @@ export const routes = new Elysia()
         set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         console.table(query)
         if(query.instanceID && query.worldID) {
-            const instanceInfo = await getInstanceInfo(query.worldID, query.instanceID);
-            return instanceInfo;
+            return await getInstanceInfo(query.worldID, query.instanceID);
         } else {
             console.log('No instanceID or worldID provided')
         }

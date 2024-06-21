@@ -118,7 +118,7 @@ async function runWS(cookies: string) {
                         logger.error("Error while trying to get instance data: " + e);
                         return undefined;
                     });
-                    logger.log("User (" + jsonData.user.displayName + ") is traveling to world: [" + instanceData?.world.name + "]");
+                    logger.info("User (" + jsonData.user.displayName + ") is traveling to world: [" + instanceData?.world.name + "]");
 
                 } else if (location !== "" && travelingToLocation === "" && location.substring(0, 5) === "wrld_") {
                     // User HAS TRAVELED to instance
@@ -128,14 +128,14 @@ async function runWS(cookies: string) {
                         logger.error("Error while trying to get instance data: " + e);
                         return undefined;
                     });
-                    logger.log("User (" + jsonData.user.displayName + ") has traveled to world: [" + instanceData?.world.name + "]");
+                    logger.info("User (" + jsonData.user.displayName + ") has traveled to world: [" + instanceData?.world.name + "]");
                 }
                 else if (location === "private" && jsonData.worldId === "private" && travelingToLocation === "private") {
-                    logger.log("User (" + jsonData.user.displayName + ") is in a private instance (probably in a private world or in a private instance of a public world)");
+                    logger.info("User (" + jsonData.user.displayName + ") is in a private instance (probably in a private world or in a private instance of a public world)");
                 }
                 else {
                     logger.debug("PLEASE CHECK, NEEDS TO BE IMPLEMENTED");
-                    logger.log(jsonData);
+                    logger.info(jsonData);
                 }
                 break;
             }
@@ -169,7 +169,7 @@ loginAndRun().catch(e => {
 }).then(() => logger.working("Running WS.."));
 
 
-// if wsRunning is false, then we will try to login again
+// if wsRunning is false, then we will try to log in again
 setInterval(() => {
     if (!isWSRunning) {
         if (wsStoppedCount < 10) {

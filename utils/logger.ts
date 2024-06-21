@@ -1,6 +1,6 @@
-import {join} from 'path';
-import * as fs from 'fs';
-import * as util from 'util';
+import { join } from 'path';
+import { existsSync, mkdirSync, createWriteStream, WriteStream } from 'fs';
+import { format as utilFormat } from 'util';
 import { format } from 'date-fns';
 
 let dateNow: Date = new Date();
@@ -10,12 +10,12 @@ let dateStamp: string = format(dateNow, "yyyy-MM-dd H-mm-ss");
  * The LogManager class provides logging functionality for the application.
  */
 export class LogManager {
-    logger: any;
+    logger: WriteStream | null;
     debugType: string;
     logDir: string;
     logFilePath: string;
     logFileName: string;
-    logApp: string
+    logApp: string;
 
     /**
      * Constructs a new instance of the LogManager class.
@@ -27,11 +27,10 @@ export class LogManager {
         this.debugType = debugType;
         this.logDir = '';
         this.logFilePath = '';
-        if(!logApp) 
-            logApp = 'VRSPACE';
-        this.logApp = logApp;
-        this.logFileName = util.format('%s_%s.log', logApp, dateStamp);
+        this.logApp = logApp || 'VRSPACE';
+        this.logFileName = utilFormat('%s_%s.log', this.logApp, dateStamp);
         this.checkLogDirectory();
+        this.openFile();
     }
 
     /**
@@ -40,42 +39,46 @@ export class LogManager {
     checkLogDirectory(): void {
         const currentDirectory = process.cwd();
 
-        if(this.debugType) {
+        if (this.debugType) {
             // If debug mode is enabled, set logDir to current directory
             this.logDir = join(currentDirectory, 'logs');
         } else {
             this.logDir = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : '/tmp') || (process.platform === 'linux' ? process.env.HOME + '/.local/share' : '/tmp/');
         }
 
-        if (!fs.existsSync(this.logDir)) {
-            fs.mkdirSync(this.logDir);
+        if (!existsSync(this.logDir)) {
+            mkdirSync(this.logDir);
+            console.log("Writing Log Directory at: "+this.returnLogDirectory())
         }
 
         this.logDir = join(this.logDir, 'vrspace');
         this.logFilePath = join(this.logDir, this.logFileName);
 
         // If directory does not exist, create it
-        if (!fs.existsSync(this.logDir)) {
-            fs.mkdirSync(this.logDir);
+        if (!existsSync(this.logDir)) {
+            mkdirSync(this.logDir);
         }
     }
 
     /**
-     * Opens the log file in append mode and returns the write stream.
-     * @returns The write stream for the log file.
+     * Opens the log file in append mode.
      */
-    openFile(): fs.WriteStream {
-        return fs.createWriteStream(this.logFilePath, {
-            flags: 'a'
-        });
+    openFile(): void {
+        if (!this.logger) {
+            this.logger = createWriteStream(this.logFilePath, {
+                flags: 'a'
+            });
+        }
     }
 
     /**
      * Closes the log file stream.
-     * @param stream - The write stream to close.
      */
-    closeFile(stream: fs.WriteStream): void {
-        stream.close();
+    closeFile(): void {
+        if (this.logger) {
+            this.logger.end();
+            this.logger = null;
+        }
     }
 
     /**
@@ -87,10 +90,21 @@ export class LogManager {
     logLine(level: string, message: any): string {
         let dateNow: Date = new Date();
         let dateLOG: string = format(dateNow, 'dd/MM/yyyy H:mm:ss:SSS');
-        let appName = this.logApp;
-        if(appName === 'VRSPACE')
-            appName = 'MAIN'
-        return util.format('[%s] - [%s] - [%s] - %s', dateLOG, appName, level, typeof message === 'object' ? JSON.stringify(message) : message);
+        let appName = this.logApp === 'VRSPACE' ? 'MAIN' : this.logApp;
+        return utilFormat('[%s] - [%s] - [%s] - %s', dateLOG, appName, level, typeof message === 'object' ? JSON.stringify(message) : message);
+    }
+
+    /**
+     * Logs a message with the specified level.
+     * @param level - The log level.
+     * @param message - The message to log.
+     */
+    private log(level: string, message: any): void {
+        const logLine = this.logLine(level, message);
+        if (this.logger) {
+            this.logger.write(logLine + '\n');
+        }
+        this.logToConsole(logLine, level);
     }
 
     /**
@@ -98,10 +112,7 @@ export class LogManager {
      * @param message - The info message to log.
      */
     info(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('INFO', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('INFO', message));
+        this.log('INFO', message);
     }
 
     /**
@@ -109,10 +120,7 @@ export class LogManager {
      * @param message - The success message to log.
      */
     success(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('SUCCESS', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('SUCCESS', message));
+        this.log('SUCCESS', message);
     }
 
     /**
@@ -120,10 +128,7 @@ export class LogManager {
      * @param message - The working message to log.
      */
     working(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('WORKING', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('WORKING', message));
+        this.log('WORKING', message);
     }
 
     /**
@@ -132,10 +137,7 @@ export class LogManager {
      */
     debug(message: any): void {
         if (this.debugType) {
-            let stream = this.openFile();
-            stream.write(this.logLine('DEBUG', message));
-            this.closeFile(stream);
-            this.logToConsole(this.logLine('DEBUG', message));
+            this.log('DEBUG', message);
         }
     }
 
@@ -144,14 +146,8 @@ export class LogManager {
      * @param exception - The error exception to log.
      */
     error(exception: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('ERROR', exception.message));
-        this.closeFile(stream);
-        stream = this.openFile();
-        console.log('STACK TRACE: ' + exception.stack);
-        stream.write(this.logLine('ERROR', exception.stack || exception));
-        this.closeFile(stream);
-        this.logToConsole(exception);
+        this.log('ERROR', exception.message);
+        this.log('ERROR', exception.stack || exception);
     }
 
     /**
@@ -159,10 +155,16 @@ export class LogManager {
      * @param message - The warning message to log.
      */
     warn(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('WARN', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('WARN', message));
+        this.log('WARN', message);
+    }
+
+
+    /**
+     * Writes a message to the log file without logging to the console.
+     * @param message - The message to write.
+     */
+    write(message: any): void {
+        this.log('INFO', message);
     }
 
     /**
@@ -170,39 +172,20 @@ export class LogManager {
      * @param message - The fatal error message to log.
      */
     fatal(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('FATAL', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('⚠️ FATAL ⚠️', message));
-    }
-
-    /**
-     * Logs a message.
-     * @param message - The message to log.
-     */
-    log(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('INFO', message));
-        this.closeFile(stream);
-        this.logToConsole(this.logLine('INFO', message));
-    }
-
-    /**
-     * Writes a message to the log file without logging to the console.
-     * @param message - The message to write.
-     */
-    write(message: any): void {
-        let stream = this.openFile();
-        stream.write(this.logLine('INFO', message));
-        this.closeFile(stream);
+        this.log('FATAL', message);
     }
 
     /**
      * Logs a message to the console.
      * @param message - The message to log to the console.
+     * @param level - The log level.
      */
-    logToConsole(message: any): void {
-        console.log(message);
+    logToConsole(message: any, level: string): void {
+        if (level === 'ERROR' || level === 'FATAL') {
+            console.error(message);
+        } else {
+            console.log(message);
+        }
     }
 
     /**
@@ -213,3 +196,8 @@ export class LogManager {
         return this.logDir;
     }
 }
+
+const logManager = new LogManager('DEBUG');
+process.on('exit', () => {
+    logManager.closeFile();
+});

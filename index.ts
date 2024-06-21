@@ -20,11 +20,15 @@ switch (userInput) {
         deleteCookieFile();
         break;
     case 'validate':
-        validateAuthCookie();
+        validateAuthCookie().then(() => {
+            vrsLogger.working("Validating authCookie...");
+        });
         break;
     case 'auth':
         rl.question('Enter your 2FA code: ', (twoFactorCode) => {
-            doLogin(true, twoFactorCode);
+            doLogin(true, twoFactorCode).then(() => {
+                vrsLogger.working("Trying to auth to VRChat...");
+            });
         });
         break;
     case 'help':
@@ -40,10 +44,10 @@ switch (userInput) {
         break;
     case 'stop':
         rl.close();
-        process.exit();
+        break;
     case 'exit':
         rl.close();
-        process.exit();
+        break;
     default:
         console.log('Unrecognized command.');
         break;
@@ -74,7 +78,7 @@ vrsLogger.info("Bun version: "+ Bun.version);
 // Start the initial prompt
 promptUser();
 
-const app = new Elysia()
+ new Elysia()
     .onError(({ code }) => {
         if (code === 'NOT_FOUND')
             return 'Route not found :('
@@ -104,5 +108,3 @@ const app = new Elysia()
     })
     .listen(PORT)
     vrsLogger.success("Server started on port " + PORT);
-
-export type App = typeof app;

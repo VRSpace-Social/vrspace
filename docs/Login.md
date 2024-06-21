@@ -1,6 +1,6 @@
 ## How to get started
 
-Setup your VRChat credentials on the file `.env.example`
+Set up your VRChat credentials on the file `.env.example`
 
 by changing the default placeholder values with your own, then rename the file from `.env.example` to `.env`.
 
@@ -32,7 +32,7 @@ Also..
 
 #### KEEP THIS IN MIND!!!
 
-> **The cookies in the cookiejar are very powerful as it can be used to login to the VRChat API, so keep it safe!**
+> **The cookies in the cookiejar are very powerful as it can be used to log in to the VRChat API, so keep it safe!**
 
 For more information about the cookiejar and cookies in general and their use here, consult the comments on `vrchatAPI.ts`.
 
@@ -45,6 +45,6 @@ To ensure that the main `vrchatAPI.ts` its kept clean.
 
 
 ## Example code to get comfy with the login process
-We've provided you with a example file for testing and learning how the login process works, in two ways: A simple one and a manual one.
+We've provided you with an example file for testing and learning how the login process works, in two ways: A simple one and a manual one.
 
 You can find the example file is in `example/showFriends.ts`

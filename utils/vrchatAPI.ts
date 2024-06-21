@@ -5,7 +5,7 @@ import {writeFileSync, readFileSync, unlinkSync} from "fs";
 import axios from "axios";
 import { Cookie, CookieJar } from 'tough-cookie';
 import type { AxiosResponse } from "axios";
-import type {VRChatCookieFormat, VRSpaceVRCUserAvatar} from "../interfaces/apiHelper";
+import type {VRSpaceVRCUserAvatar} from "../interfaces/apiHelper";
 
 // I don't fucking know what I'm doing, but it makes 'axios.default.jar' happy, and that's all it matters.
 declare module 'axios' {
@@ -387,31 +387,6 @@ async function findUserAvatar (userId: string, getOnlyAvatarName?: boolean): Pro
             }
         });
     })
-}
-
-// Right now we don't use this, but it's here for future reference, in case we need to manually parse the cookies
-/**
- * Extracts cookie data from a given raw cookie string.
- * @param {string} rawCookie - The raw cookie string to extract data from.
- * @returns {VRChatCookieFormat} - An object containing the extracted cookie data.
- */
-function extractCookie(rawCookie: string[1]): VRChatCookieFormat {
-    logger.debug("Raw cookie from doLogin: ")
-    logger.debug(rawCookie)
-    let rawDate = Date.parse(rawCookie.split("Expires=")[1].split(";")[0]);
-    let finalDate = new Date(rawDate);
-    return {
-        key: rawCookie.split("=")[0],
-        value: rawCookie.split("=")[1].split(";")[0],
-        maxAge: Number(rawCookie.split("Max-Age=")[1].split(";")[0]),
-        path: rawCookie.split("Path=")[1].split(";")[0],
-        expires: finalDate,
-        httpOnly: rawCookie.includes("HttpOnly"),
-        sameSite: rawCookie.split("SameSite=")[1].split(";")[0],
-        hostOnly: true,
-        creation: new Date()
-    };
-
 }
 
 
