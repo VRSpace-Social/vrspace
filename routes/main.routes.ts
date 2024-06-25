@@ -7,11 +7,9 @@ export const routes = new Elysia()
         return "hello!"
     })
     .get("/api/getOnlineFriends", ({set}) => {
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         return getOnlineFriends();
     })
     .get("/api/searchFriends", ({set, query}) => {
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(query.query) {
             return searchUsers(query.query);
         } else {
@@ -19,13 +17,7 @@ export const routes = new Elysia()
         }
         
     })
-    .get('/vrc-wss.js', ({set}) => {
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
-        return Bun.file('./web/vrc-wss.js');
-    })
     .get('/api/getAuthCookie', async ({set, headers}) => {
-        console.log(headers)
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(headers['user-agent'] !== 'VRSpaceApp') {
             set.status = 404
             return 'Not Found :('
@@ -35,7 +27,6 @@ export const routes = new Elysia()
         
     })
     .get('/api/getUserInfo', async ({query, set, headers}) => {
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         if(headers['user-agent'] !== 'VRSpaceApp') {
             set.status = 404
             return 'Not Found :('
@@ -47,7 +38,6 @@ export const routes = new Elysia()
         
     })
     .get('/api/getInstanceInfo', async ({query, set}) => {
-        set.headers['x-powered-by'] = 'A protogen somewhere in a server farm'
         console.table(query)
         if(query.instanceID && query.worldID) {
             return await getInstanceInfo(query.worldID, query.instanceID);
